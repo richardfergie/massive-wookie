@@ -95,23 +95,23 @@ makeLenses ''World
 emptyWorld :: World
 emptyWorld = World emptyTable emptyTable emptyTable emptyTable
 
-insertWorld :: (Key a ~ Int) => Setter' World (Table a) -> Getter World (Table a) -> a -> State World (Entity a)
-insertWorld setter getter p = do
+insertWorld :: (Key a ~ Int) => Lens' World (Table a) -> a -> State World (Entity a)
+insertWorld l p = do
   world <- get
-  let k = world ^. getter . maxKey
-      m = world ^. getter . tableMap
+  let k = world ^. l . maxKey
+      m = world ^. l . tableMap
       newm = Map.insert k p m
       newtable = Table (k+1) newm
-      newworld = world & setter .~ newtable
+      newworld = world & l .~ newtable
   put newworld
   return $ Entity k p
 
-updateWorld :: (Key a ~ Int) => Setter' World (Table a) -> Getter World (Table a) -> Key a -> a -> State World (Entity a)
-updateWorld setter getter k v = do
+updateWorld :: (Key a ~ Int) => Lens' World (Table a) -> Key a -> a -> State World (Entity a)
+updateWorld l k v = do
   world <- get
-  let m = world ^. getter . tableMap
+  let m = world ^. l . tableMap
       newm = Map.insert k v m
-      newworld = world & setter . tableMap .~ newm
+      newworld = world & l . tableMap .~ newm
   put newworld
   return $ Entity k v
 
@@ -157,11 +157,11 @@ stateFlow :: Flow a -> State World a
 stateFlow p = case Op.view p of
   Return a -> return a
   (CreateGroupMember :>>= ps) ->
-    insertWorld worldGroupMembers worldGroupMembers GroupMember >>= stateFlow . ps
+    insertWorld worldGroupMembers GroupMember >>= stateFlow . ps
   (CreateGroup oid ms :>>= ps) ->
-    insertWorld worldGroups worldGroups (Group oid ms) >>= stateFlow . ps
+    insertWorld worldGroups (Group oid ms) >>= stateFlow . ps
   (CreateProject fid gid :>>= ps) ->
-    insertWorld worldProjects worldProjects (Project fid gid Nothing Created) >>= stateFlow . ps
+    insertWorld worldProjects (Project fid gid Nothing Created) >>= stateFlow . ps
 
 example :: Flow ProjectId
 example = do
