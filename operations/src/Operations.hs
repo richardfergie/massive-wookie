@@ -7,119 +7,13 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
 module Operations where
+
 import Control.Monad.Operational hiding (view)
 import qualified Control.Monad.Operational as Op
-import Data.Maybe
-import Data.Map (Map)
-import qualified Data.Map as Map
-import Control.Monad.State
-import Control.Lens
 
-data Entity a = Entity { entityKey :: Key a,
-                         entityVal :: a
-                       }
+import Types
+import qualified Crud
 
-deriving instance (Show a,Show (Key a)) => Show (Entity a)
-
-type FacilitatorId = Int
-type GroupId = Int
-type ProjectId = Int
-type GroupMemberId = Int
-type PanelId = Int
-type CommunityPanelMemberId = Int
-type OrganisationId = Int
-
-data ProjectStatus = Created | Submitted | Validated | Granted deriving (Show)
-data Project = Project { facilitator :: FacilitatorId,
-                         group :: GroupId,
-                         panel :: Maybe PanelId,
-                         status :: ProjectStatus
-                       } deriving (Show)
-
-data GroupMember = GroupMember deriving Show
-
-data Group = Group { organisation :: OrganisationId,
-                     members :: [GroupMemberId]
-                   } deriving (Show)
-
-data Panel = Panel { panelGroup :: GroupId,
-                     panelFacilitator :: FacilitatorId,
-                     otherPanelMember :: Either FacilitatorId CommunityPanelMemberId
-                   } deriving Show
-
-data CommunityPanelMember = CommunityPanelMember deriving Show
-
-class EntityKey a where
-  type Key a :: *
-
-instance EntityKey Project where
-  type Key Project = ProjectId
-
-instance EntityKey Group where
-  type Key Group = GroupId
-
-instance EntityKey Panel where
-  type Key Panel = PanelId
-
-instance EntityKey GroupMember where
-  type Key GroupMember = GroupMemberId
-
-data Table a = Table { _maxKey :: Int,
-                       _tableMap :: Map Int a
-                     } deriving (Show)
-makeLenses ''Table
-
-emptyTable = Table 0 Map.empty
-
-tableInsert :: (Key a ~ Int) => a -> State (Table a) (Entity a)
-tableInsert v = do
-  Table k m <- get
-  put $ Table (k+1) $ Map.insert k v m
-  return $ Entity k v
-
-tableLookup :: (Key a ~ Int) => Key a -> State (Table a) (Maybe (Entity a))
-tableLookup k = do
-  Table _ m <- get
-  case Map.lookup k m of
-    Nothing -> return Nothing
-    Just v -> return $ Just $ Entity k v
-
-
-data World = World { _worldProjects :: Table Project,
-                     _worldGroups :: Table Group,
-                     _worldPanels :: Table Panel,
-                     _worldGroupMembers :: Table GroupMember
-                   } deriving (Show)
-makeLenses ''World
-
-emptyWorld :: World
-emptyWorld = World emptyTable emptyTable emptyTable emptyTable
-
-insertWorld :: (Key a ~ Int) => Lens' World (Table a) -> a -> State World (Entity a)
-insertWorld l p = do
-  world <- get
-  let k = world ^. l . maxKey
-      m = world ^. l . tableMap
-      newm = Map.insert k p m
-      newtable = Table (k+1) newm
-      newworld = world & l .~ newtable
-  put newworld
-  return $ Entity k p
-
-updateWorld :: (Key a ~ Int) => Lens' World (Table a) -> Key a -> a -> State World (Entity a)
-updateWorld l k v = do
-  world <- get
-  let m = world ^. l . tableMap
-      newm = Map.insert k v m
-      newworld = world & l . tableMap .~ newm
-  put newworld
-  return $ Entity k v
-
-getWorld :: (Key a ~ Int) => Getter World (Table a) -> Key a -> State World (Maybe (Entity a))
-getWorld getter k = do
-  world <- get
-  let m = world ^. getter . tableMap
-  return $ fmap (Entity k) $ Map.lookup k m
 
 data Actions a where
   CreateProject :: FacilitatorId -> GroupId -> Actions (Entity Project)
@@ -152,22 +46,3 @@ validateProject = singleton . ValidateProject
 createCommunityPanelMember = singleton CreateCommunityPanelMember
 
 createPanel x y z = singleton $ CreatePanel x y z
-
-stateFlow :: Flow a -> State World a
-stateFlow p = case Op.view p of
-  Return a -> return a
-  (CreateGroupMember :>>= ps) ->
-    insertWorld worldGroupMembers GroupMember >>= stateFlow . ps
-  (CreateGroup oid ms :>>= ps) ->
-    insertWorld worldGroups (Group oid ms) >>= stateFlow . ps
-  (CreateProject fid gid :>>= ps) ->
-    insertWorld worldProjects (Project fid gid Nothing Created) >>= stateFlow . ps
-
-example :: Flow ProjectId
-example = do
-  g1 <- createGroupMember
-  g2 <- createGroupMember
-  g3 <- createGroupMember
-  Entity g _ <- createGroup 1 $ map entityKey [g1,g2,g3]
-  Entity pid proj <- createProject 1 g
-  return pid
