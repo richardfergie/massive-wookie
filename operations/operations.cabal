@@ -18,12 +18,13 @@ library
   exposed-modules:     Operations
                        Types
                        Crud
+                       TH
   build-depends:       base >= 4.7 && < 5,
                        operational,
                        containers,
                        lens,
                        mtl,
-                       time
+                       template-haskell
   default-language:    Haskell2010
 
 executable operational-exe

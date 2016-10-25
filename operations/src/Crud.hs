@@ -4,6 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Crud where
 
 import Control.Monad.Operational hiding (view)
@@ -13,28 +14,9 @@ import Control.Monad.State
 import Control.Monad.Except
 
 import Types
+import TH
 
-data Crud a where
-  CreateFacilitator :: Facilitator -> Crud (Entity Facilitator)
-  SetFacilitator :: FacilitatorId -> Facilitator -> Crud (Entity Facilitator)
-  DeleteFacilitator :: FacilitatorId -> Crud ()
-  GetFacilitator :: FacilitatorId -> Crud (Maybe Facilitator)
-  CreateGroup :: Group -> Crud (Entity Group)
-  SetGroup :: GroupId -> Group -> Crud (Entity Group)
-  DeleteGroup :: GroupId -> Crud ()
-  GetGroup :: GroupId -> Crud (Maybe Group)
-  CreateProject :: Project -> Crud (Entity Project)
-  SetProject :: ProjectId -> Project -> Crud (Entity Project)
-  DeleteProject :: ProjectId -> Crud ()
-  GetProject :: ProjectId -> Crud (Maybe Project)
-  CreateGroupMember :: GroupMember -> Crud (Entity GroupMember)
-  SetGroupMember :: GroupMemberId -> GroupMember -> Crud (Entity GroupMember)
-  DeleteGroupMember :: GroupMemberId -> Crud ()
-  GetGroupMember :: GroupMemberId -> Crud (Maybe GroupMember)
-  CreateOrganisation :: Organisation -> Crud (Entity Organisation)
-  SetOrganisation :: OrganisationId -> Organisation -> Crud (Entity Organisation)
-  DeleteOrganisation :: OrganisationId -> Crud ()
-  GetOrganisation :: OrganisationId -> Crud (Maybe Organisation)
+$(genGADT "Crud" [''Facilitator, ''Group, ''Project, ''GroupMember, ''Organisation])
 
 createFacilitator = singleton . CreateFacilitator
 setFacilitator = singleton . SetFacilitator

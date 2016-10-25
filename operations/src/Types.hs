@@ -10,7 +10,6 @@ import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Control.Monad.State
-import Data.Time
 
 data Entity a = Entity { entityKey :: Key a,
                          entityVal :: a
