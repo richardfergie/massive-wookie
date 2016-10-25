@@ -95,8 +95,8 @@ stateCrudPrint p = case Op.view p of
 
 example :: CRUD ProjectId
 example = do
-  oid <- fmap entityKey $ createOrganisation Organisation
-  fid <- fmap entityKey $ createFacilitator Facilitator
+  oid <- entityKey <$> createOrganisation Organisation
+  fid <- entityKey <$> createFacilitator Facilitator
   g1 <- createGroupMember GroupMember
   g2 <- createGroupMember GroupMember
   g3 <- createGroupMember GroupMember

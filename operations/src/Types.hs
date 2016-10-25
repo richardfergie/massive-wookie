@@ -91,12 +91,12 @@ tableUpdate k v = do
   put $ Table x $ Map.insert k v m
   return $ Entity k v
 
-tableLookup :: (Key a ~ Int, Monad m) => Key a -> StateT (Table a) m (Maybe (Entity a))
+tableLookup :: (Key a ~ Int, Monad m) => Key a -> StateT (Table a) m (Maybe a)
 tableLookup k = do
   Table _ m <- get
   case Map.lookup k m of
     Nothing -> return Nothing
-    Just v -> return $ Just $ Entity k v
+    Just v -> return $ Just v
 
 
 data World = World { _worldProjects :: Table Project,
@@ -127,9 +127,5 @@ insertWorld l p = zoomWorld l (tableInsert p)
 updateWorld :: (Key a ~ Int, Monad m) => Lens' World (Table a) -> Key a -> a -> StateT World m (Entity a)
 updateWorld l k v = zoomWorld l (tableUpdate k v)
 
-getWorld :: (Key a ~ Int, Monad m) => Getter World (Table a) -> Key a -> StateT World m (Maybe a)
-getWorld getter k = do
-  world <- get
-  let m = world ^. getter . tableMap
-  return $ Map.lookup k m
-
+getWorld :: (Key a ~ Int, Monad m) => Lens' World (Table a) -> Key a -> StateT World m (Maybe a)
+getWorld getter k = zoomWorld getter (tableLookup k)
