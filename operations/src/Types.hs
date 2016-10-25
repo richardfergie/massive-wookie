@@ -46,7 +46,9 @@ data Panel = Panel { panelGroup :: GroupId,
 
 data CommunityPanelMember = CommunityPanelMember deriving Show
 
-data Facilitator = Facilitator
+data Facilitator = Facilitator deriving Show
+
+data Organisation = Organisation deriving Show
 
 class EntityKey a where
   type Key a :: *
@@ -65,6 +67,9 @@ instance EntityKey GroupMember where
 
 instance EntityKey Facilitator where
   type Key Facilitator = FacilitatorId
+
+instance EntityKey Organisation where
+  type Key Organisation = OrganisationId
 
 data Table a = Table { _maxKey :: Int,
                        _tableMap :: Map Int a
@@ -97,12 +102,21 @@ tableLookup k = do
 data World = World { _worldProjects :: Table Project,
                      _worldGroups :: Table Group,
                      _worldPanels :: Table Panel,
-                     _worldGroupMembers :: Table GroupMember
+                     _worldGroupMembers :: Table GroupMember,
+                     _worldFacilitators :: Table Facilitator,
+                     _worldCommunityPanelMembers :: Table CommunityPanelMember,
+                     _worldOrganisations :: Table Organisation
                    } deriving (Show)
 makeLenses ''World
 
 emptyWorld :: World
-emptyWorld = World emptyTable emptyTable emptyTable emptyTable
+emptyWorld = World emptyTable
+                   emptyTable
+                   emptyTable
+                   emptyTable
+                   emptyTable
+                   emptyTable
+                   emptyTable
 
 zoomWorld :: (Monad m) => Lens' World a -> StateT a m b -> StateT World m b
 zoomWorld = zoom
