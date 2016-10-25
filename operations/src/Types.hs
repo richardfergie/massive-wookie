@@ -10,6 +10,7 @@ import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Control.Monad.State
+import Data.Time
 
 data Entity a = Entity { entityKey :: Key a,
                          entityVal :: a
@@ -70,15 +71,22 @@ data Table a = Table { _maxKey :: Int,
                      } deriving (Show)
 makeLenses ''Table
 
+emptyTable :: Table a
 emptyTable = Table 0 Map.empty
 
-tableInsert :: (Key a ~ Int) => a -> State (Table a) (Entity a)
+tableInsert :: (Key a ~ Int, Monad m) => a -> StateT (Table a) m (Entity a)
 tableInsert v = do
   Table k m <- get
   put $ Table (k+1) $ Map.insert k v m
   return $ Entity k v
 
-tableLookup :: (Key a ~ Int) => Key a -> State (Table a) (Maybe (Entity a))
+tableUpdate :: (Key a ~ Int, Monad m) => Key a -> a -> StateT (Table a) m (Entity a)
+tableUpdate k v = do
+  Table x m <- get
+  put $ Table x $ Map.insert k v m
+  return $ Entity k v
+
+tableLookup :: (Key a ~ Int, Monad m) => Key a -> StateT (Table a) m (Maybe (Entity a))
 tableLookup k = do
   Table _ m <- get
   case Map.lookup k m of
@@ -96,28 +104,18 @@ makeLenses ''World
 emptyWorld :: World
 emptyWorld = World emptyTable emptyTable emptyTable emptyTable
 
-insertWorld :: (Key a ~ Int, MonadState World m) => Lens' World (Table a) -> a -> m (Entity a)
-insertWorld l p = do
-  world <- get
-  let k = world ^. l . maxKey
-      m = world ^. l . tableMap
-      newm = Map.insert k p m
-      newtable = Table (k+1) newm
-      newworld = world & l .~ newtable
-  put newworld
-  return $ Entity k p
+zoomWorld :: (Monad m) => Lens' World a -> StateT a m b -> StateT World m b
+zoomWorld = zoom
 
-updateWorld :: (Key a ~ Int, MonadState World m) => Lens' World (Table a) -> Key a -> a -> m (Entity a)
-updateWorld l k v = do
-  world <- get
-  let m = world ^. l . tableMap
-      newm = Map.insert k v m
-      newworld = world & l . tableMap .~ newm
-  put newworld
-  return $ Entity k v
+insertWorld :: (Monad m, Key a ~ Int) => Lens' World (Table a) -> a -> StateT World m (Entity a)
+insertWorld l p = zoomWorld l (tableInsert p)
 
-getWorld :: (Key a ~ Int, MonadState World m) => Getter World (Table a) -> Key a -> m (Maybe a)
+updateWorld :: (Key a ~ Int, Monad m) => Lens' World (Table a) -> Key a -> a -> StateT World m (Entity a)
+updateWorld l k v = zoomWorld l (tableUpdate k v)
+
+getWorld :: (Key a ~ Int, Monad m) => Getter World (Table a) -> Key a -> StateT World m (Maybe a)
 getWorld getter k = do
   world <- get
   let m = world ^. getter . tableMap
   return $ Map.lookup k m
+

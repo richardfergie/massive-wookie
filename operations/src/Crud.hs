@@ -9,10 +9,8 @@ module Crud where
 import Control.Monad.Operational hiding (view)
 import qualified Control.Monad.Operational as Op
 import Data.Maybe
-import Data.Map (Map)
-import qualified Data.Map as Map
 import Control.Monad.State
-import Control.Lens
+import Control.Monad.Except
 
 import Types
 
@@ -56,7 +54,10 @@ getGroupMember = singleton . GetGroupMember
 
 type CRUD = Program Crud
 
-stateCrud :: (MonadState World m) => CRUD a -> m a
+data CRUDError = ForeignKeyMissing String
+                   deriving (Show)
+
+stateCrud :: (Monad m, MonadError CRUDError m) => CRUD a -> StateT World m a
 stateCrud p = case Op.view p of
   Return x -> return x
   (GetProject x :>>= ps) -> getWorld worldProjects x >>= stateCrud . ps
@@ -67,14 +68,15 @@ stateCrud p = case Op.view p of
     mgroup <- stateCrud $ getGroup $ group x
     case mgroup of
       Just _ -> insertWorld worldProjects x >>= stateCrud . ps
-      Nothing -> error "GroupId does not exist"
+      Nothing -> throwError $ ForeignKeyMissing $ show (group x)++" does not exist"
   (CreateGroupMember x :>>= ps) -> insertWorld worldGroupMembers x >>= stateCrud . ps
   (CreateGroup x :>>= ps) -> do
     --also need org check here
     mgmids <- stateCrud $ traverse getGroupMember $ members x
     case all isJust mgmids of
       True -> insertWorld worldGroups x >>= stateCrud . ps
-      False -> error "At least one group member doesn't exist"
+      False -> throwError $ ForeignKeyMissing "At least one group member doesn't exist"
+
 
 example :: CRUD ProjectId
 example = do
@@ -84,3 +86,4 @@ example = do
   Entity g _ <- createGroup $ Group 1 $ map entityKey [g1,g2,g3]
   Entity pid _ <- createProject $ Project 1 g Nothing Created
   return pid
+
