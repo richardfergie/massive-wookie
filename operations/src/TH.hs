@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
 module TH where
 
 import Language.Haskell.TH
@@ -13,7 +11,7 @@ genGADT gadtname ns = do
   singletons <- mapM createSingletons ns
   return $ [
     DataD [] foo [PlainTV $ mkName "a"] Nothing (concat rows) []
-         ]
+         ] ++ concat singletons
 
 rowGADT :: String -> Name -> Q [Con]
 rowGADT gadtname name = do
@@ -38,10 +36,10 @@ createSingletons :: Name -> Q [Dec]
 createSingletons name = do
   n <- getName name
   return [
-     ValD (VarP $ mkName $ "create"++n) (NormalB (AppE (AppE (VarE $ mkName ".") (VarE $ mkName "singleton")) (VarE $ mkName $ "Create"++n))) [] {-,
-    ValD (VarP $ mkName $ "set"++n) (NormalB (InfixE (Just (UnboundVarE $ mkName "singleton")) (VarE $ mkName ".") (Just (UnboundVarE $ mkName $ "Set"++n)))) [],
-    ValD (VarP $ mkName $ "delete"++n) (NormalB (InfixE (Just (UnboundVarE $ mkName "singleton")) (VarE $ mkName ".") (Just (UnboundVarE $ mkName $ "Delete"++n)))) [],
-    ValD (VarP $ mkName $ "get"++n) (NormalB (InfixE (Just (UnboundVarE $ mkName "singleton")) (VarE $ mkName ".") (Just (UnboundVarE $ mkName $ "Get"++n)))) [] -}
+     ValD (VarP $ mkName $ "create"++n) (NormalB (AppE (AppE (VarE $ mkName ".") (VarE $ mkName "singleton")) (ConE $ mkName $ "Create"++n))) [],
+     FunD (mkName $ "set"++n) [Clause [VarP $ mkName "x",VarP $ mkName "y"] (NormalB (AppE (AppE (VarE $ mkName "$") (UnboundVarE $ mkName "singleton")) (AppE (AppE (ConE $ mkName $ "Set"++n) (VarE $ mkName "x")) (VarE $ mkName "y")))) []],
+     ValD (VarP $ mkName $ "delete"++n) (NormalB (AppE (AppE (VarE $ mkName ".") (VarE $ mkName "singleton")) (ConE $ mkName $ "Delete"++n))) [],
+     ValD (VarP $ mkName $ "get"++n) (NormalB (AppE (AppE (VarE $ mkName ".") (VarE $ mkName "singleton")) (ConE $ mkName $ "Get"++n))) []
          ]
 
 getName :: Name -> Q String

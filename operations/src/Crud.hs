@@ -18,31 +18,6 @@ import TH
 
 $(genGADT "Crud" [''Facilitator, ''Group, ''Project, ''GroupMember, ''Organisation])
 
-createFacilitator = singleton . CreateFacilitator
-setFacilitator = singleton . SetFacilitator
-deleteFacilitator = singleton . DeleteFacilitator
-getFacilitator = singleton . GetFacilitator
-
-createGroup = singleton . CreateGroup
-setGroup = singleton . SetGroup
-deleteGroup = singleton . DeleteGroup
-getGroup = singleton . GetGroup
-
-createProject = singleton . CreateProject
-setProject = singleton . SetProject
-deleteProject = singleton . DeleteProject
-getProject = singleton . GetProject
-
-createGroupMember = singleton . CreateGroupMember
-setGroupMember = singleton . SetGroupMember
-deleteGroupMember = singleton . DeleteGroupMember
-getGroupMember = singleton . GetGroupMember
-
-createOrganisation = singleton . CreateOrganisation
-setOrganisation = singleton . SetOrganisation
-deleteOrganisation = singleton . DeleteOrganisation
-getOrganisation = singleton . GetOrganisation
-
 type CRUD = Program Crud
 
 data CRUDError = ForeignKeyMissing String
