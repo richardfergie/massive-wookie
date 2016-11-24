@@ -4,6 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Lib where
 
 import Data.Aeson
@@ -14,105 +15,57 @@ import Servant
 import Data.Text (Text)
 import Data.Time (Day)
 import qualified Data.HashMap.Strict as HashMap
+import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Except
+import qualified Data.Map.Strict as Map
+import Data.Acid
+import Data.Acid.Local
+import Control.Monad.Trans.Either
+import Control.Exception (bracket)
 
+import qualified Crud
+import qualified Acid
+import qualified Types
 
-class EntityKey a where
-  type Key a :: *
+type CRUD a = "create" :> ReqBody '[JSON] a :> Post '[JSON] (Types.Entity a)
+               :<|> Capture "id" Int :> DeleteNoContent '[JSON] NoContent
+               :<|> Capture "id" Int :> ReqBody '[JSON] a :> Put '[JSON] (Types.Entity a)
+               :<|> Capture "id" Int :> Get '[JSON] (Maybe (Types.Entity a))
 
-data Entity a = Entity {
-  key :: Key a,
-  value :: a
-                       }
+crudGroup :: ServerT (CRUD Types.Group) Crud.CRUD
+crudGroup = (\g -> Crud.createGroup g)
+             :<|> (\i -> Crud.deleteGroup i >> return NoContent)
+             :<|> (\i b -> Crud.setGroup i b)
+             :<|> (\i -> Crud.getGroup i)
 
-instance (ToJSON a, Key a ~ Int) => ToJSON (Entity a) where
-  toJSON (Entity k v) = Object $ HashMap.insert "id" (toJSON k) m
-     where m = case toJSON v of
-             Object o -> o
-             x -> HashMap.singleton "value" $ toJSON x
+crudGroupMember :: ServerT (CRUD Types.GroupMember) Crud.CRUD
+crudGroupMember = Crud.createGroupMember
+               :<|> (\i -> Crud.deleteGroupMember i >> return NoContent)
+               :<|> Crud.setGroupMember
+               :<|> Crud.getGroupMember
 
-data User = User
-  { userId        :: Int
-  , userFirstName :: String
-  , userLastName  :: String
-  } deriving (Eq, Show)
+toHandler :: AcidState Acid.World -> Crud.CRUD a -> Handler a
+toHandler acid c = do
+  res <- liftIO $ runExceptT $ Acid.acidStateCrud acid c
+  ExceptT $ return $ case res of
+    Right x -> Right x
+    Left (Crud.ForeignKeyMissing s) -> Left err400
+    Left (Crud.NotFound) -> Left err404
 
-$(deriveJSON defaultOptions ''User)
-
-data GroupMember = GroupMember
-  {
-    groupMemberFirstname :: Text,
-    groupMemberLastname :: Text,
-    groupMemberDob :: Day
-  } deriving (Eq, Show)
-
-instance EntityKey GroupMember where
-  type Key GroupMember = Int
-
-$(deriveJSON defaultOptions ''GroupMember)
-
-data Group = Group {
-  groupName :: Text,
-  groupMembers :: [GroupMember]
-                   } deriving (Show,Eq)
-
-instance EntityKey Group where
-  type Key Group = Int
-
-$(deriveJSON defaultOptions ''Group)
-
-data Project = Project {
-  projectName :: Text,
-  projectDescription :: Text
-                       } deriving (Show, Eq)
-
-instance EntityKey Project where
-  type Key Project = Int
-
-$(deriveJSON defaultOptions ''Project)
-
-type CRUD a = "create" :> ReqBody '[JSON] a :> Post '[JSON] (Entity a)
-              :<|> Capture "id" (Key a) :> DeleteNoContent '[JSON] NoContent
-              :<|> Capture "id" (Key a) :> ReqBody '[JSON] a :> Put '[JSON] (Entity a)
-              :<|> Capture "id" (Key a) :> Get '[JSON] (Entity a)
-
-
-crudGroup :: ServeApp (CRUD Group)
-crudGroup = (\x -> ask >>= \i -> return $ Entity i x)
-  :<|> (\_ -> return NoContent)
-  :<|> (\_ x -> return $ Entity 1 x)
-  :<|> (\_ -> return $ Entity 1 $ Group "Group Name" [])
-
-newtype App a = App {
-  runApp :: ReaderT Int IO a
-                    } deriving (Monad, Functor, Applicative, MonadReader Int, MonadIO)
-
-
-type ServeApp a = ServerT a App
-
-type API = "users" :> Get '[JSON] [User]
-        :<|> "group" :> CRUD Group
-
-runAppT :: Int -> App a -> ExceptT ServantErr IO a
-runAppT i action = liftIO $ runReaderT (runApp action) i
-
-testServer' :: Int -> Server API
-testServer' code = enter (Nat (runAppT code)) server
-
-startApp :: IO ()
-startApp = run 8080 app
-
-app :: Application
-app = serve api (testServer' 5)
+handlerServer :: AcidState Acid.World -> Server API
+handlerServer acid = enter (Nat $ toHandler acid) $ (crudGroupMember :<|> crudGroup)
 
 api :: Proxy API
 api = Proxy
 
-server :: ServeApp API
-server = return users :<|> crudGroup
+app :: AcidState Acid.World -> Application
+app acid = serve api (handlerServer acid)
 
-users :: [User]
-users = [ User 1 "Isaac" "Newton"
-        , User 2 "Albert" "Einstein"
-        ]
+startApp :: IO ()
+startApp = bracket (openLocalStateFrom "/tmp/acid" Acid.emptyWorld)
+                   (\acid -> closeAcidState acid)
+                   (\acid -> run 8080 (app acid))
+
+type API = "groupmember" :> CRUD Types.GroupMember
+        :<|> "group" :> CRUD Types.Group

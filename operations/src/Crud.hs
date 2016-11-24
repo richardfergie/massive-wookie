@@ -19,10 +19,13 @@ import TH
 $(genGADT "Crud" [''Facilitator, ''Group, ''Project, ''GroupMember, ''Organisation])
 
 type CRUD = Program Crud
+type CRUDT = ProgramT Crud
 
 data CRUDError = ForeignKeyMissing String
+               | NotFound
                    deriving (Show)
 
+{-
 stateCrudPrint :: (Monad m, MonadError CRUDError m, MonadIO m) => CRUD a -> StateT World m a
 stateCrudPrint p = case Op.view p of
   Return x -> return x
@@ -49,7 +52,7 @@ stateCrudPrint p = case Op.view p of
   (CreateOrganisation x :>>= ps) -> (liftIO $ putStrLn "Create Organisation") >> insertWorld worldOrganisations x >>= stateCrudPrint . ps
   (CreateFacilitator x :>>= ps) -> (liftIO $ putStrLn "Create Facilitator") >> insertWorld worldFacilitators x >>= stateCrudPrint . ps
 
-
+{-
 example :: CRUD ProjectId
 example = do
   oid <- entityKey <$> createOrganisation Organisation
@@ -60,3 +63,5 @@ example = do
   Entity g _ <- createGroup $ Group oid $ map entityKey [g1,g2,g3]
   Entity pid _ <- createProject $ Project fid g Nothing Created
   return pid
+-}
+-}

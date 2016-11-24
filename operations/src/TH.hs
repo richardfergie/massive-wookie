@@ -29,7 +29,7 @@ rowGADT gadtname name = do
                 (AppT (ConT $ mkName gadtname) (TupleT 0)),
           GadtC [mkName $ "Get"++n]
                 [(Bang NoSourceUnpackedness NoSourceStrictness,ConT $ mkName $ n++"Id")]
-                (AppT (ConT $ mkName gadtname) (AppT (ConT $ mkName "Maybe") (ConT n')))
+                (AppT (ConT $ mkName gadtname) (AppT (ConT $ mkName "Maybe") (AppT (ConT $ mkName "Entity") (ConT n'))))
            ]
 
 createSingletons :: Name -> Q [Dec]

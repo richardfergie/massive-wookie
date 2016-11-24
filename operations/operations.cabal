@@ -19,12 +19,23 @@ library
                        Types
                        Crud
                        TH
+                       Acid
   build-depends:       base >= 4.7 && < 5,
                        operational,
                        containers,
                        lens,
                        mtl,
-                       template-haskell
+                       template-haskell,
+                       aeson,
+                       text,
+                       unordered-containers,
+                       time,
+                       acid-state,
+                       safecopy,
+                       ixset-typed,
+                       cereal,
+                       cereal-text
+
   default-language:    Haskell2010
 
 executable operational-exe

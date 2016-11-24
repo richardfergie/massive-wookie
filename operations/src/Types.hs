@@ -1,21 +1,31 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Types where
 
 import Control.Lens
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Control.Monad.State
+import GHC.Generics
+import Data.Text (Text)
+import Data.Time (Day)
+import Data.Aeson
 
-data Entity a = Entity { entityKey :: Key a,
+data Entity a = Entity { entityKey :: Int,
                          entityVal :: a
-                       }
+                       } deriving (Generic, Show, ToJSON, FromJSON)
 
-deriving instance (Show a,Show (Key a)) => Show (Entity a)
+instance Eq (Entity a) where
+  (==) x y = (==) (entityKey x) (entityKey y)
+
+instance Ord (Entity a) where
+  compare x y = compare (entityKey x) (entityKey y)
 
 type FacilitatorId = Int
 type GroupId = Int
@@ -25,51 +35,36 @@ type PanelId = Int
 type CommunityPanelMemberId = Int
 type OrganisationId = Int
 
-data ProjectStatus = Created | Submitted | Validated | Granted deriving (Show)
+data ProjectStatus = Created | Submitted | Validated | Granted deriving (Show, Generic)
 data Project = Project { facilitator :: FacilitatorId,
                          group :: GroupId,
                          panel :: Maybe PanelId,
                          status :: ProjectStatus
-                       } deriving (Show)
+                       } deriving (Show, Generic)
 
-data GroupMember = GroupMember deriving Show
+data GroupMember = GroupMember {
+  firstname :: Text,
+  lastname :: Text,
+  dob :: Day
+                               } deriving (Show, Generic, ToJSON, FromJSON)
 
 data Group = Group { organisation :: OrganisationId,
-                     members :: [GroupMemberId]
-                   } deriving (Show)
+                     members :: [GroupMemberId],
+                     name :: Text
+                   } deriving (Show, Generic, ToJSON, FromJSON)
 
 data Panel = Panel { panelGroup :: GroupId,
                      panelFacilitator :: FacilitatorId,
                      otherPanelMember :: Either FacilitatorId CommunityPanelMemberId
-                   } deriving Show
+                   } deriving (Show,Generic, ToJSON, FromJSON)
 
-data CommunityPanelMember = CommunityPanelMember deriving Show
+data CommunityPanelMember = CommunityPanelMember deriving (Show,Generic)
 
-data Facilitator = Facilitator deriving Show
+data Facilitator = Facilitator deriving (Show, Generic)
 
-data Organisation = Organisation deriving Show
+data Organisation = Organisation deriving (Show, Generic)
 
-class EntityKey a where
-  type Key a :: *
-
-instance EntityKey Project where
-  type Key Project = ProjectId
-
-instance EntityKey Group where
-  type Key Group = GroupId
-
-instance EntityKey Panel where
-  type Key Panel = PanelId
-
-instance EntityKey GroupMember where
-  type Key GroupMember = GroupMemberId
-
-instance EntityKey Facilitator where
-  type Key Facilitator = FacilitatorId
-
-instance EntityKey Organisation where
-  type Key Organisation = OrganisationId
-
+{-
 data Table a = Table { _maxKey :: Int,
                        _tableMap :: Map Int a
                      } deriving (Show)
@@ -128,3 +123,4 @@ updateWorld l k v = zoomWorld l (tableUpdate k v)
 
 getWorld :: (Key a ~ Int, Monad m) => Lens' World (Table a) -> Key a -> StateT World m (Maybe a)
 getWorld getter k = zoomWorld getter (tableLookup k)
+-}
