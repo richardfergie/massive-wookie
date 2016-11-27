@@ -23,49 +23,35 @@ import Data.Acid
 import Data.Acid.Local
 import Control.Monad.Trans.Either
 import Control.Exception (bracket)
+import Control.Monad.Trans.Resource
 
 import qualified Crud
 import qualified Acid
 import qualified Types
+import API
+import Foundation
+import Auth hiding (appServerNat, app, AuthAPI)
 
-type CRUD a = "create" :> ReqBody '[JSON] a :> Post '[JSON] (Types.Entity a)
-               :<|> Capture "id" Int :> DeleteNoContent '[JSON] NoContent
-               :<|> Capture "id" Int :> ReqBody '[JSON] a :> Put '[JSON] (Types.Entity a)
-               :<|> Capture "id" Int :> Get '[JSON] (Maybe (Types.Entity a))
 
-crudGroup :: ServerT (CRUD Types.Group) Crud.CRUD
-crudGroup = (\g -> Crud.createGroup g)
-             :<|> (\i -> Crud.deleteGroup i >> return NoContent)
-             :<|> (\i b -> Crud.setGroup i b)
-             :<|> (\i -> Crud.getGroup i)
+appServerNat :: AppConfig -> Maybe (UnverifiedJwtToken) -> AppServer :~> Handler
+appServerNat appconfig munverifiedtoken = Nat $ \action -> do
+  rqid <- liftIO $ return 5
+  mcreds <- verifyTokenFromHeader munverifiedtoken appconfig
+  runResourceT $ runReaderT (runAppServer action) $ RequestInfo appconfig mcreds rqid
 
-crudGroupMember :: ServerT (CRUD Types.GroupMember) Crud.CRUD
-crudGroupMember = Crud.createGroupMember
-               :<|> (\i -> Crud.deleteGroupMember i >> return NoContent)
-               :<|> Crud.setGroupMember
-               :<|> Crud.getGroupMember
+type AuthAPI = JwtAuthHeader :> API
 
-toHandler :: AcidState Acid.World -> Crud.CRUD a -> Handler a
-toHandler acid c = do
-  res <- liftIO $ runExceptT $ Acid.acidStateCrud acid c
-  ExceptT $ return $ case res of
-    Right x -> Right x
-    Left (Crud.ForeignKeyMissing s) -> Left err400
-    Left (Crud.NotFound) -> Left err404
+handlerServer :: AppConfig -> Server (AuthAPI)
+handlerServer appconfig munverifiedtoken = enter (appServerNat appconfig munverifiedtoken) (apiServer)
 
-handlerServer :: AcidState Acid.World -> Server API
-handlerServer acid = enter (Nat $ toHandler acid) $ (crudGroupMember :<|> crudGroup)
 
-api :: Proxy API
+api :: Proxy AuthAPI
 api = Proxy
 
-app :: AcidState Acid.World -> Application
+app :: AppConfig -> Application
 app acid = serve api (handlerServer acid)
 
 startApp :: IO ()
-startApp = bracket (openLocalStateFrom "/tmp/acid" Acid.emptyWorld)
-                   (\acid -> closeAcidState acid)
+startApp = bracket (openLocalStateFrom "/tmp/acid" Acid.emptyWorld >>= \acid -> return $ AppConfig acid (parseJwk "secret"))
+                   (\appconf -> closeAcidState $ Foundation.state appconf)
                    (\acid -> run 8080 (app acid))
-
-type API = "groupmember" :> CRUD Types.GroupMember
-        :<|> "group" :> CRUD Types.Group
