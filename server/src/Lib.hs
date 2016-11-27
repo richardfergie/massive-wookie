@@ -1,9 +1,7 @@
 {-# LANGUAGE DataKinds       #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeOperators   #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Lib where
 
@@ -30,22 +28,19 @@ import qualified Acid
 import qualified Types
 import API
 import Foundation
-import Auth hiding (appServerNat, app, AuthAPI)
+import Auth hiding (appServerNat, app, startApp)
 
-
-appServerNat :: AppConfig -> Maybe (UnverifiedJwtToken) -> AppServer :~> Handler
+appServerNat :: AppConfig -> Maybe UnverifiedJwtToken -> AppServer :~> Handler
 appServerNat appconfig munverifiedtoken = Nat $ \action -> do
   rqid <- liftIO $ return 5
   mcreds <- verifyTokenFromHeader munverifiedtoken appconfig
   runResourceT $ runReaderT (runAppServer action) $ RequestInfo appconfig mcreds rqid
 
-type AuthAPI = JwtAuthHeader :> API
-
-handlerServer :: AppConfig -> Server (AuthAPI)
-handlerServer appconfig munverifiedtoken = enter (appServerNat appconfig munverifiedtoken) (apiServer)
+handlerServer :: AppConfig -> Server (AuthAPI API)
+handlerServer appconfig munverifiedtoken = enter (appServerNat appconfig munverifiedtoken) (apiServer :<|> tokenStuff)
 
 
-api :: Proxy AuthAPI
+api :: Proxy (AuthAPI API)
 api = Proxy
 
 app :: AppConfig -> Application
