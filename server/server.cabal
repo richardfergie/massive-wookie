@@ -18,6 +18,11 @@ library
   exposed-modules:     Lib
                        API
                        Auth
+                       Acid
+                       Crud
+                       Foundation
+                       TH
+                       Types
 
   build-depends:       base >= 4.7 && < 5
                      , aeson
