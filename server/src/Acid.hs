@@ -104,14 +104,47 @@ type GroupIxs = '[Types.GroupId]
 instance Indexable GroupIxs (Entity Types.Group) where
   indices = ixList (ixFun $ \x -> [Types.entityKey x])
 
+type OrganisationIxs = '[Types.OrganisationId]
+
+instance Indexable OrganisationIxs (Entity Types.Organisation) where
+  indices = ixList (ixFun $ \x -> [Types.entityKey x])
+
+type UserIxs = '[Types.UserId,Types.Username]
+
+instance Indexable UserIxs (Entity Types.User) where
+  indices = ixList (ixFun $ \x -> [Types.entityKey x])
+                   (ixFun $ \x -> [Types.username $ Types.entityVal x])
+
+type FacilitatorIxs = '[Types.FacilitatorId,Types.UserId, Types.OrganisationId]
+
+instance Indexable FacilitatorIxs (Entity Types.Facilitator) where
+  indices = ixList (ixFun $ \x -> [Types.entityKey x])
+                   (ixFun $ \x -> [Types.facilitatorUser $ Types.entityVal x])
+                   (ixFun $ \x -> Types.facilitatorOrganisations $ Types.entityVal x)
+
+type ProjectIxs = '[Types.ProjectId]
+
+instance Indexable ProjectIxs (Entity Types.Project) where
+  indices = ixList (ixFun $ \x -> [Types.entityKey x])
+
 data World = World {
   _worldGroupMembers :: Table GroupMemberIxs Types.GroupMember,
-  _worldGroups :: Table GroupIxs Types.Group
+  _worldGroups :: Table GroupIxs Types.Group,
+  _worldOrganisations :: Table OrganisationIxs Types.Organisation,
+  _worldUsers :: Table UserIxs Types.User,
+  _worldFacilitators :: Table FacilitatorIxs Types.Facilitator,
+  _worldProjects :: Table ProjectIxs Types.Project
              } deriving (Show)
 
 makeLenses ''World
 
-emptyWorld = World emptyTable emptyTable
+emptyWorld :: World
+emptyWorld = World emptyTable
+                   emptyTable
+                   emptyTable
+                   emptyTable
+                   emptyTable
+                   emptyTable
 
 worldAction lens action = state . runState . (Lens.zoom lens) . action
 
@@ -127,28 +160,29 @@ updateWorld lens k v = state $ runState $ Lens.zoom lens (tableUpdate k v)
 getWorld :: (IsIndexOf Int ixs, Indexable ixs (Entity a)) => Lens.Getter World (Table ixs a) -> Int -> Query World (Maybe (Entity a))
 getWorld lens k = reader $ runReader $ Lens.magnify lens (tableGet k)
 
-
-deleteGroup = deleteWorld worldGroups
-getGroup = getWorld worldGroups
-
+--
+-- GroupMember queries
+--
 insertGroupMember = insertWorld worldGroupMembers
 deleteGroupMember = deleteWorld worldGroupMembers
 updateGroupMember = updateWorld worldGroupMembers
 getGroupMember = getWorld worldGroupMembers
-
-deriving instance S.Serialize Group
-$(deriveSafeCopy 0 'base ''Group)
-
 deriving instance S.Serialize GroupMember
 $(deriveSafeCopy 0 'base ''GroupMember)
-$(deriveSafeCopy 0 'base ''World)
 
-$(deriveSafeCopy 0 'base ''Crud.CRUDError)
+--
+-- Group Queries
+--
+deriving instance S.Serialize Group
+$(deriveSafeCopy 0 'base ''Group)
 
 checkGroupMemberIds :: [GroupMemberId] -> Query World Bool
 checkGroupMemberIds xs = do
   mids <- mapM getGroupMember xs
   return $ all isJust mids
+
+deleteGroup = deleteWorld worldGroups
+getGroup = getWorld worldGroups
 
 insertGroup g = do
   fkey <- liftQuery $ checkGroupMemberIds $ Types.members g
@@ -162,8 +196,91 @@ updateGroup k v = do
     then fmap Right $ updateWorld worldGroups k v
     else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
 
+--
+-- Organisation queries
+--
+insertOrganisation = insertWorld worldOrganisations
+deleteOrganisation = deleteWorld worldOrganisations
+updateOrganisation = updateWorld worldOrganisations
+getOrganisation = getWorld worldOrganisations
+deriving instance S.Serialize Types.Organisation
+$(deriveSafeCopy 0 'base ''Types.Organisation)
+
+
+--
+-- User queries
+--
+insertUser = insertWorld worldUsers
+deleteUser = deleteWorld worldUsers
+updateUser = updateWorld worldUsers
+getUser = getWorld worldUsers
+deriving instance S.Serialize Types.User
+$(deriveSafeCopy 0 'base ''Types.User)
+
+--
+-- Facilitator queries
+--
+deriving instance S.Serialize Types.Facilitator
+$(deriveSafeCopy 0 'base ''Types.Facilitator)
+deleteFacilitator = deleteWorld worldFacilitators
+getFacilitator = getWorld worldFacilitators
+
+checkFacilitatorKeys f = do
+  ukey <- fmap isJust $ getUser $ Types.facilitatorUser f
+  orgkeys <- fmap (all isJust) $ mapM getOrganisation $ Types.facilitatorOrganisations f
+  return $ ukey && orgkeys
+
+insertFacilitator f = do
+  fkey <- liftQuery $ checkFacilitatorKeys f
+  if fkey
+    then Right <$> insertWorld worldFacilitators f
+    else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
+
+updateFacilitator k v = do
+  fkey <- liftQuery $ checkFacilitatorKeys v
+  if fkey
+    then Right <$> updateWorld worldFacilitators k v
+    else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
+
+--
+-- Project queries
+--
+deriving instance S.Serialize Types.ProjectStatus
+$(deriveSafeCopy 0 'base ''Types.ProjectStatus)
+
+deriving instance S.Serialize Types.Project
+$(deriveSafeCopy 0 'base ''Types.Project)
+
+deleteProject = deleteWorld worldProjects
+getProject = getWorld worldProjects
+
+checkProjectKeys p = do
+  fkey <- fmap isJust $ getFacilitator $ Types.facilitator p
+  gkey <- fmap isJust $ getGroup $ Types.group p
+  pkey <- case Types.panel p of
+    Nothing -> return True
+    Just pid -> fmap isJust $ error "Panel stuff is not defined"
+  return $ fkey && gkey && pkey
+
+insertProject p = do
+  fkey <- liftQuery $ checkProjectKeys p
+  if fkey
+    then Right <$> insertWorld worldProjects p
+    else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
+
+updateProject k v = do
+  fkey <- liftQuery $ checkProjectKeys v
+  if fkey
+    then Right <$> updateWorld worldProjects k v
+    else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
+
 gWorld :: Query World World
 gWorld = ask
+
+$(deriveSafeCopy 0 'base ''World)
+
+$(deriveSafeCopy 0 'base ''Crud.CRUDError)
+
 
 $(makeAcidic ''World ['insertGroup,
                       'deleteGroup,
@@ -173,6 +290,22 @@ $(makeAcidic ''World ['insertGroup,
                       'deleteGroupMember,
                       'updateGroupMember,
                       'getGroupMember,
+                      'insertFacilitator,
+                      'deleteFacilitator,
+                      'updateFacilitator,
+                      'getFacilitator,
+                      'insertProject,
+                      'deleteProject,
+                      'updateProject,
+                      'getProject,
+                      'insertOrganisation,
+                      'deleteOrganisation,
+                      'updateOrganisation,
+                      'getOrganisation,
+                      'insertUser,
+                      'deleteUser,
+                      'updateUser,
+                      'getUser,
                       'gWorld
                      ])
 
@@ -183,11 +316,33 @@ acidStateCrud acid p = do
  y <- Op.viewT p
  case y of
   Return x -> return $ Right x
-  Crud.GetGroup x :>>= ps -> query' acid (GetGroup x) >>= maybe (return $ Left Crud.NotFound) (acidStateCrud acid . ps . Just)
+
+  Crud.GetGroup x :>>= ps -> query' acid (GetGroup x) >>= acidStateCrud acid . ps
   Crud.DeleteGroup x :>>= ps -> update' acid (DeleteGroup x) >>= acidStateCrud acid . ps
-  Crud.SetGroup k v :>>= ps -> (liftIO $ putStrLn "Insert Group") >> update' acid (UpdateGroup k v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
-  Crud.CreateGroup v :>>= ps -> (liftIO $ putStrLn "Create Group") >> update' acid (InsertGroup v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
-  Crud.GetGroupMember x :>>= ps -> (liftIO $ putStrLn "Get GroupMember") >> query' acid (GetGroupMember x) >>= maybe (return $ Left Crud.NotFound) (acidStateCrud acid . ps . Just)
-  Crud.DeleteGroupMember x :>>= ps -> (liftIO $ putStrLn "Delete GroupMember") >> update' acid (DeleteGroupMember x) >>= acidStateCrud acid . ps
-  Crud.SetGroupMember k v :>>= ps -> (liftIO $ putStrLn "Insert GroupMember") >> update' acid (UpdateGroupMember k v) >>= acidStateCrud acid . ps
-  Crud.CreateGroupMember v :>>= ps -> (liftIO $ putStrLn "Create GroupMember") >> update' acid (InsertGroupMember v) >>= acidStateCrud acid . ps
+  Crud.SetGroup k v :>>= ps -> update' acid (UpdateGroup k v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+  Crud.CreateGroup v :>>= ps -> update' acid (InsertGroup v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+
+  Crud.GetGroupMember x :>>= ps -> query' acid (GetGroupMember x) >>= acidStateCrud acid . ps
+  Crud.DeleteGroupMember x :>>= ps -> update' acid (DeleteGroupMember x) >>= acidStateCrud acid . ps
+  Crud.SetGroupMember k v :>>= ps -> update' acid (UpdateGroupMember k v) >>= acidStateCrud acid . ps
+  Crud.CreateGroupMember v :>>= ps -> update' acid (InsertGroupMember v) >>= acidStateCrud acid . ps
+
+  Crud.GetOrganisation x :>>= ps -> query' acid (GetOrganisation x) >>= acidStateCrud acid . ps
+  Crud.DeleteOrganisation x :>>= ps -> update' acid (DeleteOrganisation x) >>= acidStateCrud acid . ps
+  Crud.SetOrganisation k v :>>= ps -> update' acid (UpdateOrganisation k v) >>= acidStateCrud acid . ps
+  Crud.CreateOrganisation v :>>= ps -> update' acid (InsertOrganisation v) >>= acidStateCrud acid . ps
+
+  Crud.GetFacilitator x :>>= ps -> query' acid (GetFacilitator x) >>= acidStateCrud acid . ps
+  Crud.DeleteFacilitator x :>>= ps -> update' acid (DeleteFacilitator x) >>= acidStateCrud acid . ps
+  Crud.SetFacilitator k v :>>= ps -> update' acid (UpdateFacilitator k v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+  Crud.CreateFacilitator v :>>= ps -> update' acid (InsertFacilitator v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+
+  Crud.GetProject x :>>= ps -> query' acid (GetProject x) >>= acidStateCrud acid . ps
+  Crud.DeleteProject x :>>= ps -> update' acid (DeleteProject x) >>= acidStateCrud acid . ps
+  Crud.SetProject k v :>>= ps -> update' acid (UpdateProject k v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+  Crud.CreateProject v :>>= ps -> update' acid (InsertProject v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+
+  Crud.GetUser x :>>= ps -> query' acid (GetUser x) >>= acidStateCrud acid . ps
+  Crud.DeleteUser x :>>= ps -> update' acid (DeleteUser x) >>= acidStateCrud acid . ps
+  Crud.SetUser k v :>>= ps -> update' acid (UpdateUser k v) >>= acidStateCrud acid . ps
+  Crud.CreateUser v :>>= ps -> update' acid (InsertUser v) >>= acidStateCrud acid . ps
