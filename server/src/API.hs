@@ -12,6 +12,7 @@ import qualified Crud
 import qualified Types
 import Foundation
 import Auth
+import Control.Monad.Reader(ask)
 
 type CRUD a = "create" :> ReqBody '[JSON] a :> Post '[JSON] (Types.Entity a)
                :<|> Capture "id" Int :> DeleteNoContent '[JSON] NoContent
@@ -24,9 +25,9 @@ type API = "groupmember" :> CRUD Types.GroupMember
         :<|> "organisation" :> CRUD Types.Organisation
         :<|> "facilitator" :> CRUD Types.Facilitator
 
-crudder creator deleter setter getter = (\ i -> runDB $ creator i)
-             :<|> (\i -> (runDB $ deleter i) >> return NoContent)
-             :<|> (\k v -> runDB $ setter k v)
+crudder creator deleter setter getter = (\ i -> requireUser >> (runDB $ creator i))
+             :<|> (\i -> requireUser >> (runDB $ deleter i) >> return NoContent)
+             :<|> (\k v -> requireUser >> (runDB $ setter k v))
              :<|> (\k -> do
                      res <- runDB $ getter k
                      case res of
