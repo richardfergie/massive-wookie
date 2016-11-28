@@ -32,6 +32,8 @@ import Control.Monad.Reader
 import qualified Data.ByteString.Base64 as Base64
 import Network.Wai.Handler.Warp(run)
 import Data.UUID.V4
+import Crypto.PasswordStore
+import Data.ByteString(ByteString)
 
 import Types
 import Foundation
@@ -120,6 +122,28 @@ tokenStuff :: ServerT (Get '[JSON] UnverifiedJwtToken) AppServer
 tokenStuff = do
   appconfig <- fmap requestInfoAppConfig ask
   createToken 1 appconfig
+
+type AuthRoutes = "login" :> QueryParam "username" Text :> QueryParam "password" ByteString :> Post '[JSON] UnverifiedJwtToken
+                :<|> "change-password" :> ReqBody '[JSON] PlainText :> Post '[] NoContent
+
+login :: Maybe Text -> Maybe ByteString -> AppServer UnverifiedJwtToken
+login Nothing _ = throwError err400{errBody = "You must have a password to login"}
+login _ Nothing = throwError err400{errBody = "You must have a username to login"}
+login (Just u) (Just unhashedpassword) = do
+  muser <- runDB $ error "Get by username not implemented yet"
+  case muser of
+    Nothing -> throwError err401{errBody="Username or password error"}
+    Just (Entity uid (User uname hashedpassword)) -> case verifyPassword unhashedpassword hashedpassword of
+      False -> throwError err401{errBody="Username or password error"}
+      True -> do
+        appconfig <- fmap requestInfoAppConfig ask
+        createToken uid appconfig
+
+changePassword :: PlainText -> AppServer NoContent
+changePassword = undefined
+
+loginServer :: ServerT AuthRoutes AppServer
+loginServer = login :<|> changePassword
 
 h :: AppConfig -> Server (TestAPI)
 h conf unv = enter (appServerNat conf unv) (t :<|> tokenStuff)
