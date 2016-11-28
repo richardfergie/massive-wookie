@@ -34,6 +34,7 @@ data RequestInfo = RequestInfo {
 
 data UserCreds = UserCreds {
   _userCredsId :: UserId,
+  _userCredsUsername :: Text,
   _userCredsExpires :: POSIXTime,
   _userCredsIssued :: POSIXTime
                            } deriving (Show,Eq)
