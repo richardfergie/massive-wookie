@@ -31,7 +31,7 @@ import Control.Monad.Trans.Resource
 import Control.Monad.Reader
 import qualified Data.ByteString.Base64 as Base64
 import Network.Wai.Handler.Warp(run)
-
+import Data.UUID.V4
 
 import Types
 import Foundation
@@ -90,7 +90,7 @@ verifyTokenFromHeader (Just (UnverifiedJwtToken x)) aconf = do
 
 appServerNat :: AppConfig -> Maybe (UnverifiedJwtToken) -> AppServer :~> Handler
 appServerNat appconfig munverifiedtoken = Nat $ \action -> do
-  rqid <- liftIO $ return 5
+  rqid <- liftIO $ nextRandom
   mcreds <- verifyTokenFromHeader munverifiedtoken appconfig
   runResourceT $ runReaderT (runAppServer action) $ RequestInfo appconfig mcreds rqid
 
