@@ -15,6 +15,7 @@ import Control.Monad.Except
 import Control.Monad.Trans.Resource
 import Servant
 import qualified Jose.Jwk as Jose
+import Data.UUID
 
 import Types
 import Crud
@@ -28,11 +29,12 @@ data AppConfig = AppConfig {
 data RequestInfo = RequestInfo {
   requestInfoAppConfig :: AppConfig,
   requestInfoUserCreds :: Maybe UserCreds,
-  requestInfoId :: Int
+  requestInfoId :: UUID
                                 }
 
 data UserCreds = UserCreds {
   _userCredsId :: UserId,
+  _userCredsUsername :: Text,
   _userCredsExpires :: POSIXTime,
   _userCredsIssued :: POSIXTime
                            } deriving (Show,Eq)

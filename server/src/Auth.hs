@@ -31,7 +31,9 @@ import Control.Monad.Trans.Resource
 import Control.Monad.Reader
 import qualified Data.ByteString.Base64 as Base64
 import Network.Wai.Handler.Warp(run)
-
+import Data.UUID.V4
+import Crypto.PasswordStore
+import Data.ByteString(ByteString)
 
 import Types
 import Foundation
@@ -53,11 +55,11 @@ type JwtAuthHeader = Header "authorization" UnverifiedJwtToken
 
 createToken
   :: (MonadError ServantErr m, MonadIO m) =>
-     UserId -> AppConfig -> m UnverifiedJwtToken
-createToken uid aconf = do
+     UserId -> Username -> AppConfig -> m UnverifiedJwtToken
+createToken uid uname aconf = do
   now <- liftIO getPOSIXTime
   let expires = now + 60*60*24 --one day
-      token = UserCreds uid expires now
+      token = UserCreds uid uname expires now
   mjwt <- liftIO $ Jose.encode [jwtKey aconf] (Jose.JwsEncoding Jose.HS256) (Jose.Claims $ toStrict $ encode token)
   case mjwt of
     Left _ -> throwError err500 {errBody = "Unable to authenticate"}
@@ -90,7 +92,7 @@ verifyTokenFromHeader (Just (UnverifiedJwtToken x)) aconf = do
 
 appServerNat :: AppConfig -> Maybe (UnverifiedJwtToken) -> AppServer :~> Handler
 appServerNat appconfig munverifiedtoken = Nat $ \action -> do
-  rqid <- liftIO $ return 5
+  rqid <- liftIO $ nextRandom
   mcreds <- verifyTokenFromHeader munverifiedtoken appconfig
   runResourceT $ runReaderT (runAppServer action) $ RequestInfo appconfig mcreds rqid
 
@@ -104,7 +106,7 @@ requireUser :: AppServer UserCreds
 requireUser = do
   mcreds <- fmap requestInfoUserCreds ask
   case mcreds of
-    Nothing -> throwError $ err401 { errBody = "No Authorization header in request" }
+    Nothing -> throwError $ err401 { errBody = "No or Bad Authorization header in request" }
     Just creds -> return creds
 
 t :: AppServer [Int]
@@ -119,7 +121,36 @@ t = do
 tokenStuff :: ServerT (Get '[JSON] UnverifiedJwtToken) AppServer
 tokenStuff = do
   appconfig <- fmap requestInfoAppConfig ask
-  createToken 1 appconfig
+  createToken 1 "username" appconfig
+
+type AuthRoutes = "login" :> QueryParam "username" Text :> QueryParam "password" ByteString :> Post '[JSON] UnverifiedJwtToken
+                :<|> "change-password" :> QueryParam "password" ByteString :> Post '[] NoContent
+
+login :: Maybe Text -> Maybe ByteString -> AppServer UnverifiedJwtToken
+login Nothing _ = throwError err400{errBody = "You must have a password to login"}
+login _ Nothing = throwError err400{errBody = "You must have a username to login"}
+login (Just u) (Just unhashedpassword) = do
+  muser <- runDB $ error "Get by username not implemented yet"
+  case muser of
+    Nothing -> throwError err401{errBody="Username or password error"}
+    Just (Entity uid (User uname hashedpassword)) -> case verifyPassword unhashedpassword hashedpassword of
+      False -> throwError err401{errBody="Username or password error"}
+      True -> do
+        appconfig <- fmap requestInfoAppConfig ask
+        createToken uid uname appconfig
+
+changePassword :: Maybe ByteString -> AppServer NoContent
+changePassword munhashedpassword = do
+  user <- requireUser
+  case munhashedpassword of
+    Nothing -> throwError err400{errBody="Must have password to change password"}
+    Just unhashedpassword -> do
+      hashedpassword <- liftIO $ makePassword unhashedpassword 20
+      runDB $ Crud.setUser (_userCredsId user) (Types.User (_userCredsUsername user) hashedpassword)
+      return NoContent
+
+loginServer :: ServerT AuthRoutes AppServer
+loginServer = login :<|> changePassword
 
 h :: AppConfig -> Server (TestAPI)
 h conf unv = enter (appServerNat conf unv) (t :<|> tokenStuff)

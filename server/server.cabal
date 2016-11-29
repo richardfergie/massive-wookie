@@ -48,6 +48,8 @@ library
                      , safecopy
                      , ixset-typed
                      , case-insensitive
+                     , uuid
+                     , pwstore-fast
 
   default-language:    Haskell2010
 

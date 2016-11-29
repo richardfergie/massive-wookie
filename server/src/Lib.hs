@@ -22,6 +22,7 @@ import Data.Acid.Local
 import Control.Monad.Trans.Either
 import Control.Exception (bracket)
 import Control.Monad.Trans.Resource
+import Data.UUID.V4
 
 import qualified Crud
 import qualified Acid
@@ -32,7 +33,7 @@ import Auth hiding (appServerNat, app, startApp)
 
 appServerNat :: AppConfig -> Maybe UnverifiedJwtToken -> AppServer :~> Handler
 appServerNat appconfig munverifiedtoken = Nat $ \action -> do
-  rqid <- liftIO $ return 5
+  rqid <- liftIO $ nextRandom
   mcreds <- verifyTokenFromHeader munverifiedtoken appconfig
   runResourceT $ runReaderT (runAppServer action) $ RequestInfo appconfig mcreds rqid
 
