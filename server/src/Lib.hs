@@ -38,7 +38,7 @@ appServerNat appconfig munverifiedtoken = Nat $ \action -> do
   runResourceT $ runReaderT (runAppServer action) $ RequestInfo appconfig mcreds rqid
 
 handlerServer :: AppConfig -> Server (AuthAPI API)
-handlerServer appconfig munverifiedtoken = enter (appServerNat appconfig munverifiedtoken) (apiServer :<|> tokenStuff)
+handlerServer appconfig munverifiedtoken = enter (appServerNat appconfig munverifiedtoken) (apiServer :<|> loginServer)
 
 
 api :: Proxy (AuthAPI API)
@@ -47,7 +47,18 @@ api = Proxy
 app :: AppConfig -> Application
 app acid = serve api (handlerServer acid)
 
+adminUser = Types.User "admin"
+                       "sha256|20|q34s4hOsw5rbr7XUR1C9xQ==|sopSFIYk/EpafmgOG7jt88VDGtrB2BJg+iORj2gdUBo=" --"secret"
+
+createAdmin = do
+  muser <- Crud.getUser 1
+  case muser of
+    Nothing -> Crud.createUser adminUser >> return ()
+    Just _ -> return ()
+
 startApp :: IO ()
 startApp = bracket (openLocalStateFrom "/tmp/acid" Acid.emptyWorld >>= \acid -> return $ AppConfig acid (parseJwk "secret"))
                    (\appconf -> closeAcidState $ Foundation.state appconf)
-                   (\acid -> run 8080 (app acid))
+                   (\appconf -> do
+                       runExceptT $ runResourceT $ runReaderT (runAppServer $ runDB createAdmin) (RequestInfo appconf undefined undefined)
+                       run 8080 (app appconf))
