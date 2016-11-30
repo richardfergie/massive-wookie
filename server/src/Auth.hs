@@ -53,6 +53,13 @@ $(deriveJSON defaultOptions ''UnverifiedJwtToken)
 
 type JwtAuthHeader = Header "authorization" UnverifiedJwtToken
 
+data LoginCreds = LoginCreds {
+  username :: Text,
+  password :: Text
+                             } deriving Generic
+
+$(deriveJSON defaultOptions ''LoginCreds)
+
 createToken
   :: (MonadError ServantErr m, MonadIO m) =>
      UserId -> Username -> AppConfig -> m UnverifiedJwtToken
@@ -97,7 +104,7 @@ appServerNat appconfig munverifiedtoken = Nat $ \action -> do
   runResourceT $ runReaderT (runAppServer action) $ RequestInfo appconfig mcreds rqid
 
 type AuthAPI a = JwtAuthHeader :> (a
-             :<|> "token" :> Get '[JSON] UnverifiedJwtToken)
+             :<|> "auth" :> AuthRoutes)
 
 type TestAPI  = AuthAPI (Get '[JSON] [Int])
 
@@ -123,14 +130,13 @@ tokenStuff = do
   appconfig <- fmap requestInfoAppConfig ask
   createToken 1 "username" appconfig
 
-type AuthRoutes = "login" :> QueryParam "username" Text :> QueryParam "password" ByteString :> Post '[JSON] UnverifiedJwtToken
-                :<|> "change-password" :> QueryParam "password" ByteString :> Post '[] NoContent
+type AuthRoutes = "login" :> ReqBody '[JSON] LoginCreds :> Post '[JSON] UnverifiedJwtToken
+                :<|> "change-password" :> QueryParam "password" Text :> Post '[JSON] NoContent
 
-login :: Maybe Text -> Maybe ByteString -> AppServer UnverifiedJwtToken
-login Nothing _ = throwError err400{errBody = "You must have a password to login"}
-login _ Nothing = throwError err400{errBody = "You must have a username to login"}
-login (Just u) (Just unhashedpassword) = do
-  muser <- runDB $ error "Get by username not implemented yet"
+login :: LoginCreds -> AppServer UnverifiedJwtToken
+login (LoginCreds u unhashedpasswordtxt) = do
+  let unhashedpassword = encodeUtf8 unhashedpasswordtxt
+  muser <- runDB $ Crud.getUserByUsername u
   case muser of
     Nothing -> throwError err401{errBody="Username or password error"}
     Just (Entity uid (User uname hashedpassword)) -> case verifyPassword unhashedpassword hashedpassword of
@@ -139,8 +145,9 @@ login (Just u) (Just unhashedpassword) = do
         appconfig <- fmap requestInfoAppConfig ask
         createToken uid uname appconfig
 
-changePassword :: Maybe ByteString -> AppServer NoContent
-changePassword munhashedpassword = do
+changePassword :: Maybe Text -> AppServer NoContent
+changePassword munhashedpasswordtxt = do
+  let munhashedpassword = fmap encodeUtf8 munhashedpasswordtxt
   user <- requireUser
   case munhashedpassword of
     Nothing -> throwError err400{errBody="Must have password to change password"}
@@ -151,7 +158,7 @@ changePassword munhashedpassword = do
 
 loginServer :: ServerT AuthRoutes AppServer
 loginServer = login :<|> changePassword
-
+{-
 h :: AppConfig -> Server (TestAPI)
 h conf unv = enter (appServerNat conf unv) (t :<|> tokenStuff)
 
@@ -163,3 +170,4 @@ app key = serve proxy (h key)
 
 startApp :: IO ()
 startApp = run 8080 $ app (AppConfig undefined $ parseJwk "secret")
+-}
