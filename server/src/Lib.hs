@@ -23,6 +23,8 @@ import Control.Monad.Trans.Either
 import Control.Exception (bracket)
 import Control.Monad.Trans.Resource
 import Data.UUID.V4
+import Network.Wai.Middleware.Cors
+import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 
 import qualified Crud
 import qualified Acid
@@ -56,9 +58,11 @@ createAdmin = do
     Nothing -> Crud.createUser adminUser >> return ()
     Just _ -> return ()
 
+corsPolicy = const $ Just simpleCorsResourcePolicy{corsRequestHeaders = simpleResponseHeaders ++ ["Content-Type"]}
+
 startApp :: IO ()
 startApp = bracket (openLocalStateFrom "/tmp/acid" Acid.emptyWorld >>= \acid -> return $ AppConfig acid (parseJwk "secret"))
                    (\appconf -> closeAcidState $ Foundation.state appconf)
                    (\appconf -> do
                        runExceptT $ runResourceT $ runReaderT (runAppServer $ runDB createAdmin) (RequestInfo appconf undefined undefined)
-                       run 8080 (app appconf))
+                       run 8080 (logStdoutDev $ cors corsPolicy $ app appconf))
