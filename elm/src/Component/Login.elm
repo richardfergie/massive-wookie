@@ -7,13 +7,13 @@ import Jwt
 import Json.Encode as Encode
 import Json.Decode exposing (string)
 import Http
+import Task
 
 import Helpers.Types as Types
 
 type alias Model =
     { username : String,
-      password : String,
-      message : String
+      password : String
     }
 
 type alias LoginDetails = {
@@ -21,23 +21,25 @@ type alias LoginDetails = {
         jwtToken : String
     }
 
-init = (Model "" "" "", Cmd.none)
+init = (Model "" "", Cmd.none)
 
 type Msg = UpdateUsername String
          | UpdatePassword String
          | Login
          | LoginSuccess LoginDetails
+         | Message Types.Message
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = case msg of
   UpdateUsername u -> ({model | username = u}, Cmd.none)
   UpdatePassword p -> ({model | password = p}, Cmd.none)
-  Login -> ({model | message="Attempting login..."}, attemptLogin model.username model.password)
-  LoginSuccess u -> ({model | message = "Login success"}, Cmd.none)
+  Login -> (model, Cmd.batch [Cmd.map Message <| Types.generateMessage Types.Standard "Attempting login",
+                              attemptLogin model.username model.password])
+  LoginSuccess u -> (model, Cmd.none)
+  Message m -> (model, Cmd.none)
 
 view : Model -> Html Msg
 view model = div [] [
-              div [] [text model.message],
               input [placeholder "Username", onInput UpdateUsername] [],
               input [placeholder "Password", onInput UpdatePassword] [],
               button [onClick Login] [text "Login"]

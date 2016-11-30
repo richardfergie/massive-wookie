@@ -10,11 +10,16 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import List
+import Dict
 
 type alias Model = {
         projects : WebData (List (Entity Project)),
+        groups : WebData (List (Entity Group)),
         jwtToken : Maybe String
     }
+
+getOverviewData : Model -> Cmd Msg
+getOverviewData model = Cmd.batch [getGroups model, getProjects model]
 
 getProjects : Model -> Cmd Msg
 getProjects model = Http.request {
@@ -30,25 +35,74 @@ getProjects model = Http.request {
                         withCredentials = False
                     } |> Http.send (ProjectResponse << RemoteData.fromResult)
 
-init = (Model NotAsked Nothing, Cmd.none)
+getGroups : Model -> Cmd Msg
+getGroups model = Http.request {
+                        method = "GET",
+                        url = "http://localhost:8080/group",
+                        body = Http.emptyBody,
+                        expect = Http.expectJson (Decode.list (decodeEntity decodeGroup)),
+                        headers = [
+                             Http.header "Content-Type" "application/json",
+                             Http.header "authorization" (Maybe.withDefault "" model.jwtToken)
+                            ],
+                        timeout = Nothing,
+                        withCredentials = False
+                    } |> Http.send (GroupResponse << RemoteData.fromResult)
 
-type Msg = LoadProjects
-    | ProjectResponse (WebData (List (Entity Project)))
+init = (Model NotAsked NotAsked Nothing, Cmd.none)
+
+type Msg = ProjectResponse (WebData (List (Entity Project)))
+         | GroupResponse (WebData (List (Entity Group)))
+         | AddGroup
+         | AddProject
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = case msg of
-  LoadProjects -> (model, getProjects model)
   ProjectResponse resp -> ({model | projects = resp}, Cmd.none)
+  GroupResponse resp -> ({model | groups = resp}, Cmd.none)
+  AddProject -> (model, Cmd.none)
+  AddGroup -> (model, Cmd.none)
 
 view : Model -> Html Msg
-view model = case (model.projects, model.jwtToken) of
-  (_,Nothing) -> div [] [text "You must be logged in to see anything here"]
-  (NotAsked,_) -> div [] [text "Starting to load projects..."]
-  (Loading,_) -> div [] [text "Loading projects"]
-  (Failure err,_) -> div [] [text "Error loading projects"]
-  (Success proj,_) -> case proj of
-     [] -> div [] [text "You have no projects"]
-     ps -> div [] [text "You have some projects"]
+view model = case model.jwtToken of
+  Nothing -> div [] [text "You need to be logged in to view this"]
+  Just _ -> div [] [
+             viewGroups model,
+             viewProjects model
+            ]
+
+projectButton = div [] [
+                 button [onClick AddProject] [text "New Project"]
+                ]
+groupButton = div [] [
+               button [onClick AddGroup] [text "New Group"]
+              ]
+
+viewProjects : Model -> Html Msg
+viewProjects model = case model.projects of
+  NotAsked -> div [] [text "Starting to load projects..."]
+  Loading -> div [] [text "Loading projects..."]
+  Failure err -> div [] [text "Error loading projects"]
+  Success proj -> case proj of
+     [] -> div [] [text "You have no projects",
+                   projectButton
+                  ]
+     ps -> div [] [text "You have some projects",
+                   projectButton
+                  ]
+
+viewGroups : Model -> Html Msg
+viewGroups model = case model.groups of
+  NotAsked -> div [] [text "Starting to load groups..."]
+  Loading -> div [] [text "Loading groups..."]
+  Failure err -> div [] [text "Error loading groups"]
+  Success grps -> case grps of
+    [] -> div [] [text "You have no groups",
+                  groupButton
+                 ]
+    gps -> div [] [text "You have some groups",
+                   groupButton
+                  ]
 
 main = Html.program {
            init = init,

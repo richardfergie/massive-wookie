@@ -10559,6 +10559,15 @@ var _user$project$Helpers_Types$decodeProject = A3(
 						'projectName',
 						_elm_lang$core$Json_Decode$string,
 						_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Generated_Types$Project)))))));
+var _user$project$Helpers_Types$entitiesToDict = function (l) {
+	return _elm_lang$core$Dict$fromList(
+		A2(
+			_elm_lang$core$List$map,
+			function (x) {
+				return {ctor: '_Tuple2', _0: x.entityKey, _1: x.entityVal};
+			},
+			l));
+};
 var _user$project$Helpers_Types$getResult = function (m) {
 	return m.result;
 };
@@ -10580,6 +10589,28 @@ var _user$project$Helpers_Types$displayMessage = function (f) {
 			});
 	}
 };
+var _user$project$Helpers_Types$pureCommand = function (x) {
+	return A2(
+		_elm_lang$core$Task$perform,
+		function (x) {
+			return x;
+		},
+		_elm_lang$core$Task$succeed(x));
+};
+var _user$project$Helpers_Types$Message = F3(
+	function (a, b, c) {
+		return {messageType: a, messageBody: b, messageTime: c};
+	});
+var _user$project$Helpers_Types$generateMessage = F2(
+	function (mtype, mbody) {
+		return A2(
+			_elm_lang$core$Task$perform,
+			_elm_lang$core$Basics$identity,
+			A2(
+				_elm_lang$core$Task$map,
+				A2(_user$project$Helpers_Types$Message, mtype, mbody),
+				_elm_lang$core$Time$now));
+	});
 var _user$project$Helpers_Types$Form = F2(
 	function (a, b) {
 		return {result: a, message: b};
@@ -10623,6 +10654,8 @@ var _user$project$Helpers_Types$decodeUserCreds = A3(
 				'_userCredsId',
 				_elm_lang$core$Json_Decode$int,
 				_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Helpers_Types$UserCreds)))));
+var _user$project$Helpers_Types$Standard = {ctor: 'Standard'};
+var _user$project$Helpers_Types$Important = {ctor: 'Important'};
 
 var _user$project$Component_GroupMember$startDate = A7(
 	_rluiten$elm_date_extra$Date_Extra_Create$dateFromFields,
@@ -10945,19 +10978,22 @@ var _user$project$Component_Group$view = function (model) {
 		});
 };
 
-var _user$project$Component_Login$Model = F3(
-	function (a, b, c) {
-		return {username: a, password: b, message: c};
+var _user$project$Component_Login$Model = F2(
+	function (a, b) {
+		return {username: a, password: b};
 	});
 var _user$project$Component_Login$init = {
 	ctor: '_Tuple2',
-	_0: A3(_user$project$Component_Login$Model, '', '', ''),
+	_0: A2(_user$project$Component_Login$Model, '', ''),
 	_1: _elm_lang$core$Platform_Cmd$none
 };
 var _user$project$Component_Login$LoginDetails = F2(
 	function (a, b) {
 		return {usercreds: a, jwtToken: b};
 	});
+var _user$project$Component_Login$Message = function (a) {
+	return {ctor: 'Message', _0: a};
+};
 var _user$project$Component_Login$LoginSuccess = function (a) {
 	return {ctor: 'LoginSuccess', _0: a};
 };
@@ -10969,32 +11005,32 @@ var _user$project$Component_Login$validateLogin = function (res) {
 				return _elm_lang$core$Native_Utils.crashCase(
 					'Component.Login',
 					{
-						start: {line: 53, column: 21},
-						end: {line: 60, column: 56}
+						start: {line: 55, column: 21},
+						end: {line: 62, column: 56}
 					},
 					_p0)(_p0._0._0);
 			case 'Timeout':
 				return _elm_lang$core$Native_Utils.crashCase(
 					'Component.Login',
 					{
-						start: {line: 53, column: 21},
-						end: {line: 60, column: 56}
+						start: {line: 55, column: 21},
+						end: {line: 62, column: 56}
 					},
 					_p0)('Timeout');
 			case 'NetworkError':
 				return _elm_lang$core$Native_Utils.crashCase(
 					'Component.Login',
 					{
-						start: {line: 53, column: 21},
-						end: {line: 60, column: 56}
+						start: {line: 55, column: 21},
+						end: {line: 62, column: 56}
 					},
 					_p0)('Network Error');
 			default:
 				return _elm_lang$core$Native_Utils.crashCase(
 					'Component.Login',
 					{
-						start: {line: 53, column: 21},
-						end: {line: 60, column: 56}
+						start: {line: 55, column: 21},
+						end: {line: 62, column: 56}
 					},
 					_p0)('Other error');
 		}
@@ -11005,8 +11041,8 @@ var _user$project$Component_Login$validateLogin = function (res) {
 			return _elm_lang$core$Native_Utils.crashCase(
 				'Component.Login',
 				{
-					start: {line: 58, column: 11},
-					end: {line: 60, column: 56}
+					start: {line: 60, column: 11},
+					end: {line: 62, column: 56}
 				},
 				_p5)('JWT error');
 		} else {
@@ -11067,19 +11103,25 @@ var _user$project$Component_Login$update = F2(
 			case 'Login':
 				return {
 					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{message: 'Attempting login...'}),
-					_1: A2(_user$project$Component_Login$attemptLogin, model.username, model.password)
+					_0: model,
+					_1: _elm_lang$core$Platform_Cmd$batch(
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$core$Platform_Cmd$map,
+								_user$project$Component_Login$Message,
+								A2(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Attempting login')),
+							_1: {
+								ctor: '::',
+								_0: A2(_user$project$Component_Login$attemptLogin, model.username, model.password),
+								_1: {ctor: '[]'}
+							}
+						})
 				};
+			case 'LoginSuccess':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			default:
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{message: 'Login success'}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 		}
 	});
 var _user$project$Component_Login$Login = {ctor: 'Login'};
@@ -11096,23 +11138,27 @@ var _user$project$Component_Login$view = function (model) {
 		{
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$div,
-				{ctor: '[]'},
+				_elm_lang$html$Html$input,
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html$text(model.message),
-					_1: {ctor: '[]'}
-				}),
+					_0: _elm_lang$html$Html_Attributes$placeholder('Username'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_Login$UpdateUsername),
+						_1: {ctor: '[]'}
+					}
+				},
+				{ctor: '[]'}),
 			_1: {
 				ctor: '::',
 				_0: A2(
 					_elm_lang$html$Html$input,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$placeholder('Username'),
+						_0: _elm_lang$html$Html_Attributes$placeholder('Password'),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_Login$UpdateUsername),
+							_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_Login$UpdatePassword),
 							_1: {ctor: '[]'}
 						}
 					},
@@ -11120,33 +11166,18 @@ var _user$project$Component_Login$view = function (model) {
 				_1: {
 					ctor: '::',
 					_0: A2(
-						_elm_lang$html$Html$input,
+						_elm_lang$html$Html$button,
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$placeholder('Password'),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_Login$UpdatePassword),
-								_1: {ctor: '[]'}
-							}
+							_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Login$Login),
+							_1: {ctor: '[]'}
 						},
-						{ctor: '[]'}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$button,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Login$Login),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('Login'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Login'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
 				}
 			}
 		});
@@ -11161,94 +11192,271 @@ var _user$project$Component_Login$main = _elm_lang$html$Html$program(
 		}
 	})();
 
-var _user$project$Component_Overview$view = function (model) {
-	var _p0 = {ctor: '_Tuple2', _0: model.projects, _1: model.jwtToken};
-	_v0_0:
-	do {
-		switch (_p0._0.ctor) {
-			case 'NotAsked':
-				if (_p0._1.ctor === 'Nothing') {
-					break _v0_0;
-				} else {
-					return A2(
-						_elm_lang$html$Html$div,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Starting to load projects...'),
-							_1: {ctor: '[]'}
-						});
-				}
-			case 'Loading':
-				if (_p0._1.ctor === 'Nothing') {
-					break _v0_0;
-				} else {
-					return A2(
-						_elm_lang$html$Html$div,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Loading projects'),
-							_1: {ctor: '[]'}
-						});
-				}
-			case 'Failure':
-				if (_p0._1.ctor === 'Nothing') {
-					break _v0_0;
-				} else {
-					return A2(
-						_elm_lang$html$Html$div,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Error loading projects'),
-							_1: {ctor: '[]'}
-						});
-				}
+var _user$project$Component_Overview$update = F2(
+	function (msg, model) {
+		var _p0 = msg;
+		switch (_p0.ctor) {
+			case 'ProjectResponse':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{projects: _p0._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'GroupResponse':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{groups: _p0._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'AddProject':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			default:
-				if (_p0._1.ctor === 'Nothing') {
-					break _v0_0;
-				} else {
-					var _p1 = _p0._0._0;
-					if (_p1.ctor === '[]') {
-						return A2(
-							_elm_lang$html$Html$div,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('You have no projects'),
-								_1: {ctor: '[]'}
-							});
-					} else {
-						return A2(
-							_elm_lang$html$Html$div,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('You have some projects'),
-								_1: {ctor: '[]'}
-							});
-					}
-				}
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 		}
-	} while(false);
-	return A2(
-		_elm_lang$html$Html$div,
-		{ctor: '[]'},
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html$text('You must be logged in to see anything here'),
-			_1: {ctor: '[]'}
-		});
-};
-var _user$project$Component_Overview$Model = F2(
-	function (a, b) {
-		return {projects: a, jwtToken: b};
+	});
+var _user$project$Component_Overview$Model = F3(
+	function (a, b, c) {
+		return {projects: a, groups: b, jwtToken: c};
 	});
 var _user$project$Component_Overview$init = {
 	ctor: '_Tuple2',
-	_0: A2(_user$project$Component_Overview$Model, _krisajenkins$remotedata$RemoteData$NotAsked, _elm_lang$core$Maybe$Nothing),
+	_0: A3(_user$project$Component_Overview$Model, _krisajenkins$remotedata$RemoteData$NotAsked, _krisajenkins$remotedata$RemoteData$NotAsked, _elm_lang$core$Maybe$Nothing),
 	_1: _elm_lang$core$Platform_Cmd$none
+};
+var _user$project$Component_Overview$AddProject = {ctor: 'AddProject'};
+var _user$project$Component_Overview$projectButton = A2(
+	_elm_lang$html$Html$div,
+	{ctor: '[]'},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$button,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Overview$AddProject),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('New Project'),
+				_1: {ctor: '[]'}
+			}),
+		_1: {ctor: '[]'}
+	});
+var _user$project$Component_Overview$viewProjects = function (model) {
+	var _p1 = model.projects;
+	switch (_p1.ctor) {
+		case 'NotAsked':
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Starting to load projects...'),
+					_1: {ctor: '[]'}
+				});
+		case 'Loading':
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Loading projects...'),
+					_1: {ctor: '[]'}
+				});
+		case 'Failure':
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Error loading projects'),
+					_1: {ctor: '[]'}
+				});
+		default:
+			var _p2 = _p1._0;
+			if (_p2.ctor === '[]') {
+				return A2(
+					_elm_lang$html$Html$div,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('You have no projects'),
+						_1: {
+							ctor: '::',
+							_0: _user$project$Component_Overview$projectButton,
+							_1: {ctor: '[]'}
+						}
+					});
+			} else {
+				return A2(
+					_elm_lang$html$Html$div,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('You have some projects'),
+						_1: {
+							ctor: '::',
+							_0: _user$project$Component_Overview$projectButton,
+							_1: {ctor: '[]'}
+						}
+					});
+			}
+	}
+};
+var _user$project$Component_Overview$AddGroup = {ctor: 'AddGroup'};
+var _user$project$Component_Overview$groupButton = A2(
+	_elm_lang$html$Html$div,
+	{ctor: '[]'},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$button,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Overview$AddGroup),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('New Group'),
+				_1: {ctor: '[]'}
+			}),
+		_1: {ctor: '[]'}
+	});
+var _user$project$Component_Overview$viewGroups = function (model) {
+	var _p3 = model.groups;
+	switch (_p3.ctor) {
+		case 'NotAsked':
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Starting to load groups...'),
+					_1: {ctor: '[]'}
+				});
+		case 'Loading':
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Loading groups...'),
+					_1: {ctor: '[]'}
+				});
+		case 'Failure':
+			return A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Error loading groups'),
+					_1: {ctor: '[]'}
+				});
+		default:
+			var _p4 = _p3._0;
+			if (_p4.ctor === '[]') {
+				return A2(
+					_elm_lang$html$Html$div,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('You have no groups'),
+						_1: {
+							ctor: '::',
+							_0: _user$project$Component_Overview$groupButton,
+							_1: {ctor: '[]'}
+						}
+					});
+			} else {
+				return A2(
+					_elm_lang$html$Html$div,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('You have some groups'),
+						_1: {
+							ctor: '::',
+							_0: _user$project$Component_Overview$groupButton,
+							_1: {ctor: '[]'}
+						}
+					});
+			}
+	}
+};
+var _user$project$Component_Overview$view = function (model) {
+	var _p5 = model.jwtToken;
+	if (_p5.ctor === 'Nothing') {
+		return A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('You need to be logged in to view this'),
+				_1: {ctor: '[]'}
+			});
+	} else {
+		return A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: _user$project$Component_Overview$viewGroups(model),
+				_1: {
+					ctor: '::',
+					_0: _user$project$Component_Overview$viewProjects(model),
+					_1: {ctor: '[]'}
+				}
+			});
+	}
+};
+var _user$project$Component_Overview$main = _elm_lang$html$Html$program(
+	{
+		init: _user$project$Component_Overview$init,
+		view: _user$project$Component_Overview$view,
+		update: _user$project$Component_Overview$update,
+		subscriptions: function (_p6) {
+			return _elm_lang$core$Platform_Sub$none;
+		}
+	})();
+var _user$project$Component_Overview$GroupResponse = function (a) {
+	return {ctor: 'GroupResponse', _0: a};
+};
+var _user$project$Component_Overview$getGroups = function (model) {
+	return A2(
+		_elm_lang$http$Http$send,
+		function (_p7) {
+			return _user$project$Component_Overview$GroupResponse(
+				_krisajenkins$remotedata$RemoteData$fromResult(_p7));
+		},
+		_elm_lang$http$Http$request(
+			{
+				method: 'GET',
+				url: 'http://localhost:8080/group',
+				body: _elm_lang$http$Http$emptyBody,
+				expect: _elm_lang$http$Http$expectJson(
+					_elm_lang$core$Json_Decode$list(
+						_user$project$Helpers_Types$decodeEntity(_user$project$Generated_Types$decodeGroup))),
+				headers: {
+					ctor: '::',
+					_0: A2(_elm_lang$http$Http$header, 'Content-Type', 'application/json'),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$http$Http$header,
+							'authorization',
+							A2(_elm_lang$core$Maybe$withDefault, '', model.jwtToken)),
+						_1: {ctor: '[]'}
+					}
+				},
+				timeout: _elm_lang$core$Maybe$Nothing,
+				withCredentials: false
+			}));
 };
 var _user$project$Component_Overview$ProjectResponse = function (a) {
 	return {ctor: 'ProjectResponse', _0: a};
@@ -11256,9 +11464,9 @@ var _user$project$Component_Overview$ProjectResponse = function (a) {
 var _user$project$Component_Overview$getProjects = function (model) {
 	return A2(
 		_elm_lang$http$Http$send,
-		function (_p2) {
+		function (_p8) {
 			return _user$project$Component_Overview$ProjectResponse(
-				_krisajenkins$remotedata$RemoteData$fromResult(_p2));
+				_krisajenkins$remotedata$RemoteData$fromResult(_p8));
 		},
 		_elm_lang$http$Http$request(
 			{
@@ -11284,35 +11492,18 @@ var _user$project$Component_Overview$getProjects = function (model) {
 				withCredentials: false
 			}));
 };
-var _user$project$Component_Overview$update = F2(
-	function (msg, model) {
-		var _p3 = msg;
-		if (_p3.ctor === 'LoadProjects') {
-			return {
-				ctor: '_Tuple2',
-				_0: model,
-				_1: _user$project$Component_Overview$getProjects(model)
-			};
-		} else {
-			return {
-				ctor: '_Tuple2',
-				_0: _elm_lang$core$Native_Utils.update(
-					model,
-					{projects: _p3._0}),
-				_1: _elm_lang$core$Platform_Cmd$none
-			};
-		}
-	});
-var _user$project$Component_Overview$main = _elm_lang$html$Html$program(
-	{
-		init: _user$project$Component_Overview$init,
-		view: _user$project$Component_Overview$view,
-		update: _user$project$Component_Overview$update,
-		subscriptions: function (_p4) {
-			return _elm_lang$core$Platform_Sub$none;
-		}
-	})();
-var _user$project$Component_Overview$LoadProjects = {ctor: 'LoadProjects'};
+var _user$project$Component_Overview$getOverviewData = function (model) {
+	return _elm_lang$core$Platform_Cmd$batch(
+		{
+			ctor: '::',
+			_0: _user$project$Component_Overview$getGroups(model),
+			_1: {
+				ctor: '::',
+				_0: _user$project$Component_Overview$getProjects(model),
+				_1: {ctor: '[]'}
+			}
+		});
+};
 
 var _user$project$Component_Project$update = F2(
 	function (msg, model) {
@@ -11397,6 +11588,24 @@ var _user$project$Component_Project$view = function (model) {
 		});
 };
 
+var _user$project$Main$viewMessages = function (model) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		A2(
+			_elm_lang$core$List$map,
+			function (x) {
+				return A2(
+					_elm_lang$html$Html$div,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text(x.messageBody),
+						_1: {ctor: '[]'}
+					});
+			},
+			model.messages));
+};
 var _user$project$Main$groupSize = function (g) {
 	var _p0 = g;
 	if (_p0.ctor === 'Nothing') {
@@ -11405,25 +11614,155 @@ var _user$project$Main$groupSize = function (g) {
 		return _elm_lang$core$Dict$size(_p0._0.members);
 	}
 };
-var _user$project$Main$Model = F6(
-	function (a, b, c, d, e, f) {
-		return {group: a, project: b, login: c, overview: d, view: e, user: f};
+var _user$project$Main$Model = F7(
+	function (a, b, c, d, e, f, g) {
+		return {group: a, project: b, login: c, overview: d, view: e, user: f, messages: g};
 	});
 var _user$project$Main$OverviewView = {ctor: 'OverviewView'};
 var _user$project$Main$LoginView = {ctor: 'LoginView'};
-var _user$project$Main$model = A6(
+var _user$project$Main$model = A7(
 	_user$project$Main$Model,
 	_elm_lang$core$Maybe$Nothing,
 	_elm_lang$core$Maybe$Nothing,
-	A3(_user$project$Component_Login$Model, '', '', ''),
+	A2(_user$project$Component_Login$Model, '', ''),
 	_elm_lang$core$Tuple$first(_user$project$Component_Overview$init),
 	_user$project$Main$LoginView,
-	_elm_lang$core$Maybe$Nothing);
+	_elm_lang$core$Maybe$Nothing,
+	{ctor: '[]'});
 var _user$project$Main$init = {ctor: '_Tuple2', _0: _user$project$Main$model, _1: _elm_lang$core$Platform_Cmd$none};
 var _user$project$Main$ProjectView = {ctor: 'ProjectView'};
 var _user$project$Main$GroupView = {ctor: 'GroupView'};
+var _user$project$Main$Tick = function (a) {
+	return {ctor: 'Tick', _0: a};
+};
+var _user$project$Main$Logout = {ctor: 'Logout'};
 var _user$project$Main$ChangeView = function (a) {
 	return {ctor: 'ChangeView', _0: a};
+};
+var _user$project$Main$navBar = function (model) {
+	var _p1 = model.user;
+	if (_p1.ctor === 'Nothing') {
+		return A2(
+			_elm_lang$html$Html$nav,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('primary'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$class('container'),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$ul,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$li,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$a,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('Login'),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}),
+				_1: {ctor: '[]'}
+			});
+	} else {
+		return A2(
+			_elm_lang$html$Html$nav,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('primary'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$class('container'),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$ul,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$li,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$a,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onClick(
+											_user$project$Main$ChangeView(_user$project$Main$OverviewView)),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('Overview'),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$li,
+								{ctor: '[]'},
+								{
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$a,
+										{ctor: '[]'},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text('Dummy'),
+											_1: {ctor: '[]'}
+										}),
+									_1: {ctor: '[]'}
+								}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$li,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$a,
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$Logout),
+												_1: {ctor: '[]'}
+											},
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html$text('Logout'),
+												_1: {ctor: '[]'}
+											}),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}
+						}
+					}),
+				_1: {ctor: '[]'}
+			});
+	}
 };
 var _user$project$Main$UpdateOverview = function (a) {
 	return {ctor: 'UpdateOverview', _0: a};
@@ -11433,12 +11772,35 @@ var _user$project$Main$UpdateLogin = function (a) {
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p1 = msg;
-		switch (_p1.ctor) {
+		var _p2 = msg;
+		switch (_p2.ctor) {
+			case 'Tick':
+				var oldmessages = model.messages;
+				var newmessages = A2(
+					_elm_lang$core$List$filter,
+					function (x) {
+						return _elm_lang$core$Native_Utils.cmp(x.messageTime, _p2._0 - (_elm_lang$core$Time$second * 5)) > 0;
+					},
+					oldmessages);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{messages: newmessages}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'Logout':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{user: _elm_lang$core$Maybe$Nothing, view: _user$project$Main$LoginView}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 			case 'UpdateGroup':
 				var newgroup = A2(
 					_user$project$Component_Group$update,
-					_p1._0,
+					_p2._0,
 					A2(_elm_lang$core$Maybe$withDefault, _user$project$Component_Group$model, model.group));
 				return {
 					ctor: '_Tuple2',
@@ -11452,7 +11814,7 @@ var _user$project$Main$update = F2(
 			case 'UpdateProject':
 				var newproject = A2(
 					_user$project$Component_Project$update,
-					_p1._0,
+					_p2._0,
 					A2(_elm_lang$core$Maybe$withDefault, _user$project$Component_Project$model, model.project));
 				return {
 					ctor: '_Tuple2',
@@ -11464,62 +11826,107 @@ var _user$project$Main$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'UpdateLogin':
-				if (_p1._0.ctor === 'LoginSuccess') {
-					var _p3 = _p1._0._0;
-					var overviewmodel = model.overview;
-					var newoverview = _elm_lang$core$Native_Utils.update(
-						overviewmodel,
-						{
-							jwtToken: _elm_lang$core$Maybe$Just(_p3.jwtToken)
-						});
-					var _p2 = A2(
-						_user$project$Component_Login$update,
-						_user$project$Component_Login$LoginSuccess(_p3),
-						model.login);
-					var newlogin = _p2._0;
-					var msg = _p2._1;
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
+				switch (_p2._0.ctor) {
+					case 'Message':
+						var newmessages = {ctor: '::', _0: _p2._0._0, _1: model.messages};
+						var oldmessages = model.messages;
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{messages: newmessages}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					case 'LoginSuccess':
+						var _p5 = _p2._0._0;
+						var overviewmodel = model.overview;
+						var newoverview = _elm_lang$core$Native_Utils.update(
+							overviewmodel,
 							{
-								user: _elm_lang$core$Maybe$Just(_p3),
-								view: _user$project$Main$OverviewView,
-								login: newlogin,
-								overview: newoverview
-							}),
-						_1: A2(
-							_elm_lang$core$Platform_Cmd$map,
-							_user$project$Main$UpdateOverview,
-							_user$project$Component_Overview$getProjects(newoverview))
-					};
-				} else {
-					var _p4 = A2(_user$project$Component_Login$update, _p1._0, model.login);
-					var newlogin = _p4._0;
-					var msg = _p4._1;
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{login: newlogin}),
-						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$UpdateLogin, msg)
-					};
+								jwtToken: _elm_lang$core$Maybe$Just(_p5.jwtToken)
+							});
+						var _p3 = A2(
+							_user$project$Component_Login$update,
+							_user$project$Component_Login$LoginSuccess(_p5),
+							model.login);
+						var newlogin = _p3._0;
+						var msg = _p3._1;
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{
+									user: _elm_lang$core$Maybe$Just(_p5),
+									view: _user$project$Main$OverviewView,
+									login: newlogin,
+									overview: newoverview
+								}),
+							_1: _elm_lang$core$Platform_Cmd$batch(
+								{
+									ctor: '::',
+									_0: A2(
+										_elm_lang$core$Platform_Cmd$map,
+										_user$project$Main$UpdateOverview,
+										_user$project$Component_Overview$getOverviewData(newoverview)),
+									_1: {
+										ctor: '::',
+										_0: A2(
+											_elm_lang$core$Platform_Cmd$map,
+											function (_p4) {
+												return _user$project$Main$UpdateLogin(
+													_user$project$Component_Login$Message(_p4));
+											},
+											A2(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Logged in')),
+										_1: {ctor: '[]'}
+									}
+								})
+						};
+					default:
+						var _p6 = A2(_user$project$Component_Login$update, _p2._0, model.login);
+						var newlogin = _p6._0;
+						var msg = _p6._1;
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{login: newlogin}),
+							_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$UpdateLogin, msg)
+						};
 				}
 			case 'UpdateOverview':
-				var _p5 = A2(_user$project$Component_Overview$update, _p1._0, model.overview);
-				var newoverview = _p5._0;
-				var cmd = _p5._1;
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{overview: newoverview}),
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$UpdateOverview, cmd)
-				};
+				switch (_p2._0.ctor) {
+					case 'AddGroup':
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{view: _user$project$Main$GroupView}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					case 'AddProject':
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{view: _user$project$Main$ProjectView}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
+					default:
+						var _p7 = A2(_user$project$Component_Overview$update, _p2._0, model.overview);
+						var newoverview = _p7._0;
+						var cmd = _p7._1;
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{overview: newoverview}),
+							_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$UpdateOverview, cmd)
+						};
+				}
 			default:
-				var _p7 = _p1._0;
-				var _p6 = _p7;
-				if (_p6.ctor === 'OverviewView') {
+				var _p9 = _p2._0;
+				var _p8 = _p9;
+				if (_p8.ctor === 'OverviewView') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -11528,14 +11935,14 @@ var _user$project$Main$update = F2(
 						_1: A2(
 							_elm_lang$core$Platform_Cmd$map,
 							_user$project$Main$UpdateOverview,
-							_user$project$Component_Overview$getProjects(model.overview))
+							_user$project$Component_Overview$getOverviewData(model.overview))
 					};
 				} else {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{view: _p7}),
+							{view: _p9}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
@@ -11549,11 +11956,11 @@ var _user$project$Main$projectView = function (p) {
 		_elm_lang$html$Html$map,
 		_user$project$Main$UpdateProject,
 		function () {
-			var _p8 = p;
-			if (_p8.ctor === 'Nothing') {
+			var _p10 = p;
+			if (_p10.ctor === 'Nothing') {
 				return _user$project$Component_Project$view(_user$project$Component_Project$model);
 			} else {
-				return _user$project$Component_Project$view(_p8._0);
+				return _user$project$Component_Project$view(_p10._0);
 			}
 		}());
 };
@@ -11565,104 +11972,126 @@ var _user$project$Main$groupView = function (g) {
 		_elm_lang$html$Html$map,
 		_user$project$Main$UpdateGroup,
 		function () {
-			var _p9 = g;
-			if (_p9.ctor === 'Nothing') {
+			var _p11 = g;
+			if (_p11.ctor === 'Nothing') {
 				return _user$project$Component_Group$view(_user$project$Component_Group$model);
 			} else {
-				return _user$project$Component_Group$view(_p9._0);
+				return _user$project$Component_Group$view(_p11._0);
 			}
 		}());
 };
 var _user$project$Main$view = function (m) {
-	var _p10 = m.view;
-	switch (_p10.ctor) {
-		case 'GroupView':
-			return A2(
-				_elm_lang$html$Html$div,
-				{ctor: '[]'},
-				{
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _user$project$Main$navBar(m),
+			_1: {
+				ctor: '::',
+				_0: _user$project$Main$viewMessages(m),
+				_1: {
 					ctor: '::',
-					_0: _user$project$Main$groupView(m.group),
-					_1: {
-						ctor: '::',
-						_0: function () {
-							var _p11 = _user$project$Main$groupSize(m.group);
-							if (_p11 === 0) {
+					_0: function () {
+						var _p12 = m.view;
+						switch (_p12.ctor) {
+							case 'GroupView':
 								return A2(
-									_elm_lang$html$Html$button,
+									_elm_lang$html$Html$div,
 									{ctor: '[]'},
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html$text('Project ->'),
-										_1: {ctor: '[]'}
-									});
-							} else {
-								return A2(
-									_elm_lang$html$Html$button,
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$class('button-primary'),
+										_0: _user$project$Main$groupView(m.group),
 										_1: {
 											ctor: '::',
-											_0: _elm_lang$html$Html_Events$onClick(
-												_user$project$Main$ChangeView(_user$project$Main$ProjectView)),
+											_0: function () {
+												var _p13 = _user$project$Main$groupSize(m.group);
+												if (_p13 === 0) {
+													return A2(
+														_elm_lang$html$Html$button,
+														{ctor: '[]'},
+														{
+															ctor: '::',
+															_0: _elm_lang$html$Html$text('Project ->'),
+															_1: {ctor: '[]'}
+														});
+												} else {
+													return A2(
+														_elm_lang$html$Html$button,
+														{
+															ctor: '::',
+															_0: _elm_lang$html$Html_Attributes$class('button-primary'),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$html$Html_Events$onClick(
+																	_user$project$Main$ChangeView(_user$project$Main$ProjectView)),
+																_1: {ctor: '[]'}
+															}
+														},
+														{
+															ctor: '::',
+															_0: _elm_lang$html$Html$text('Project ->'),
+															_1: {ctor: '[]'}
+														});
+												}
+											}(),
 											_1: {ctor: '[]'}
 										}
-									},
+									});
+							case 'ProjectView':
+								return A2(
+									_elm_lang$html$Html$div,
+									{ctor: '[]'},
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html$text('Project ->'),
-										_1: {ctor: '[]'}
+										_0: _user$project$Main$projectView(m.project),
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$button,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Events$onClick(
+														_user$project$Main$ChangeView(_user$project$Main$GroupView)),
+													_1: {ctor: '[]'}
+												},
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html$text('<- Group'),
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										}
 									});
-							}
-						}(),
-						_1: {ctor: '[]'}
-					}
-				});
-		case 'ProjectView':
-			return A2(
-				_elm_lang$html$Html$div,
-				{ctor: '[]'},
-				{
-					ctor: '::',
-					_0: _user$project$Main$projectView(m.project),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$button,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onClick(
-									_user$project$Main$ChangeView(_user$project$Main$GroupView)),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('<- Group'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
-				});
-		case 'LoginView':
-			return A2(
-				_elm_lang$html$Html$map,
-				_user$project$Main$UpdateLogin,
-				_user$project$Component_Login$view(m.login));
-		default:
-			return A2(
-				_elm_lang$html$Html$map,
-				_user$project$Main$UpdateOverview,
-				_user$project$Component_Overview$view(m.overview));
-	}
+							case 'LoginView':
+								return A2(
+									_elm_lang$html$Html$map,
+									_user$project$Main$UpdateLogin,
+									_user$project$Component_Login$view(m.login));
+							default:
+								return A2(
+									_elm_lang$html$Html$map,
+									_user$project$Main$UpdateOverview,
+									_user$project$Component_Overview$view(m.overview));
+						}
+					}(),
+					_1: {ctor: '[]'}
+				}
+			}
+		});
 };
 var _user$project$Main$main = _elm_lang$html$Html$program(
 	{
 		init: _user$project$Main$init,
 		view: _user$project$Main$view,
 		update: _user$project$Main$update,
-		subscriptions: function (_p12) {
-			return _elm_lang$core$Platform_Sub$none;
+		subscriptions: function (_p14) {
+			return A2(
+				_elm_lang$core$Time$every,
+				5 * _elm_lang$core$Time$second,
+				function (t) {
+					return _user$project$Main$Tick(t);
+				});
 		}
 	})();
 

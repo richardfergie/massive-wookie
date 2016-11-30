@@ -1,16 +1,34 @@
 module Helpers.Types exposing (..)
 
 import Html exposing (..)
-import Dict
+import Dict exposing (Dict, fromList)
+import List
 import Generated.Types exposing (..)
 import Json.Decode exposing (..)
 import Json.Decode.Pipeline exposing (..)
+import Task
+import Time
+
+type MessageType = Important
+                 | Standard
+
+type alias Message =
+    {
+        messageType : MessageType,
+        messageBody : String,
+        messageTime : Time.Time
+    }
+
+generateMessage : MessageType -> String -> Cmd Message
+generateMessage mtype mbody = Task.perform identity <| Task.map (Message mtype mbody) Time.now
 
 type alias Form a =
     {
         result : a,
         message : Maybe String
     }
+
+pureCommand x = Task.perform (\x->x) <| Task.succeed x
 
 displayMessage f = case f.message of
   Nothing -> div [] []
@@ -24,6 +42,9 @@ type alias Entity a = {
         entityKey : Int,
         entityVal : a
     }
+
+entitiesToDict : List (Entity a) -> Dict Int a
+entitiesToDict l = List.map (\x -> (x.entityKey,x.entityVal)) l |> Dict.fromList
 
 decodeEntity : Decoder a -> Decoder (Entity a)
 decodeEntity dec =

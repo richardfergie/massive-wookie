@@ -10,6 +10,7 @@ import Component.Overview as Overview
 import Helpers.Types as Types
 import Maybe
 import Dict
+import Time
 
 type View = GroupView
           | ProjectView
@@ -23,10 +24,11 @@ type alias Model =
         login : Login.Model,
         overview : Overview.Model,
         view : View,
-        user : Maybe Login.LoginDetails
+        user : Maybe Login.LoginDetails,
+        messages : List Types.Message
     }
 
-model = Model Nothing Nothing (Login.Model "" "" "") (Tuple.first Overview.init) LoginView Nothing
+model = Model Nothing Nothing (Login.Model "" "") (Tuple.first Overview.init) LoginView Nothing []
 
 init = (model, Cmd.none)
 
@@ -39,39 +41,78 @@ type Msg = UpdateGroup Group.Msg
          | UpdateLogin Login.Msg
          | UpdateOverview Overview.Msg
          | ChangeView View
+         | Logout
+         | Tick Time.Time
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = case msg of
+  Tick t -> let oldmessages = model.messages
+                newmessages = List.filter (\x -> x.messageTime > (t-(Time.second * 5))) oldmessages
+            in ({model | messages = newmessages}, Cmd.none)
+  Logout -> ({model | user = Nothing, view=LoginView}, Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged out" )
   UpdateGroup g -> let newgroup = Group.update g <| Maybe.withDefault Group.model model.group
                    in ({model | group = Just newgroup}, Cmd.none)
   UpdateProject p -> let newproject = Project.update p <| Maybe.withDefault Project.model model.project
                      in ({model | project = Just newproject},Cmd.none)
+  UpdateLogin (Login.Message m) -> let oldmessages = model.messages
+                                       newmessages = m :: model.messages
+                                   in ({model | messages = newmessages}, Cmd.none)
   UpdateLogin (Login.LoginSuccess u) -> let (newlogin,msg) = Login.update (Login.LoginSuccess u) model.login
                                             overviewmodel = model.overview
                                             newoverview = {overviewmodel | jwtToken = Just u.jwtToken}
-                                  in ({model | user = Just u, view=OverviewView, login=newlogin, overview=newoverview}, Cmd.map UpdateOverview <| Overview.getProjects newoverview)
+                                  in ({model | user = Just u, view=OverviewView, login=newlogin, overview=newoverview}, Cmd.batch [Cmd.map UpdateOverview <| Overview.getOverviewData newoverview,
+                          Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged in"]
+                                          )
   UpdateLogin l -> let (newlogin,msg) = Login.update l model.login
                    in ({model | login=newlogin}, Cmd.map UpdateLogin msg)
+  UpdateOverview Overview.AddGroup -> ({model | view=GroupView}, Cmd.none)
+  UpdateOverview Overview.AddProject -> ({model | view=ProjectView}, Cmd.none)
   UpdateOverview o -> let (newoverview,cmd) = Overview.update o model.overview
                       in ({model | overview = newoverview}, Cmd.map UpdateOverview cmd)
   ChangeView v -> case v of
-    OverviewView -> ({model | view = OverviewView},Cmd.map UpdateOverview <| Overview.getProjects model.overview )
+    OverviewView -> ({model | view = OverviewView},Cmd.map UpdateOverview <| Overview.getOverviewData model.overview )
     _ -> ({model | view = v}, Cmd.none)
 
 view : Model -> Html Msg
-view m = case m.view of
-  GroupView -> div [] [
+view m = div [] [
+    navBar m,
+    viewMessages m,
+    case m.view of
+      GroupView -> div [] [
                 groupView m.group,
                 case groupSize m.group of
                     0 -> button [] [text "Project ->"]
                     _ -> button [class "button-primary", onClick (ChangeView ProjectView)] [text "Project ->"]
                 ]
-  ProjectView -> div [] [
+      ProjectView -> div [] [
                   projectView m.project,
                   button [onClick (ChangeView GroupView)] [text "<- Group"]
                       ]
-  LoginView -> Html.map UpdateLogin <| Login.view m.login
-  OverviewView -> Html.map UpdateOverview <| Overview.view m.overview
+      LoginView -> Html.map UpdateLogin <| Login.view m.login
+      OverviewView -> Html.map UpdateOverview <| Overview.view m.overview
+     ]
+
+viewMessages : Model -> Html Msg
+viewMessages model = div [] <| List.map (\x -> div [] [text x.messageBody]) model.messages
+
+navBar : Model -> Html Msg
+navBar model = case model.user of
+  Nothing -> nav [class "primary", class "container"] [
+    ul [] [
+      li [] [
+           a [] [text "Login"]
+               ]
+        ]
+             ]
+  Just _ -> nav [class "primary", class "container"] [
+             ul [] [
+                     li [] [a [onClick (ChangeView OverviewView)] [text "Overview"]],
+                     li [] [a [] [text "Dummy"]],
+                     li [] [a [onClick Logout] [text "Logout"]]
+                         ]
+                 ]
+
+
 
 groupView g = Html.map UpdateGroup <| case g of
   Nothing -> Group.view Group.model
@@ -85,5 +126,5 @@ main = Html.program {
            init = init,
            view = view,
            update = update,
-           subscriptions = \_ -> Sub.none
+           subscriptions = \_ -> Time.every (5 * Time.second) (\t -> Tick t)
        }

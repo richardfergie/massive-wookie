@@ -6,7 +6,6 @@ import Json.Encode
 import String
 import Date exposing (..)
 
-
 type alias Organisation =
     { organisationName : String
     }
