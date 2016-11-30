@@ -61,6 +61,15 @@ executable server-exe
                      , server
   default-language:    Haskell2010
 
+executable elm-export-exe
+  hs-source-dirs:      elm-export
+  main-is:             Main.hs
+  build-depends:       base
+                     , server
+                     , elm-export
+                     , servant-elm
+                     , servant
+
 test-suite server-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
