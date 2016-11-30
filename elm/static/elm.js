@@ -10721,6 +10721,10 @@ var _user$project$Component_Login$init = {
 	_0: A3(_user$project$Component_Login$Model, '', '', ''),
 	_1: _elm_lang$core$Platform_Cmd$none
 };
+var _user$project$Component_Login$LoginDetails = F2(
+	function (a, b) {
+		return {usercreds: a, jwtToken: b};
+	});
 var _user$project$Component_Login$LoginSuccess = function (a) {
 	return {ctor: 'LoginSuccess', _0: a};
 };
@@ -10732,47 +10736,49 @@ var _user$project$Component_Login$validateLogin = function (res) {
 				return _elm_lang$core$Native_Utils.crashCase(
 					'Component.Login',
 					{
-						start: {line: 48, column: 21},
-						end: {line: 55, column: 38}
+						start: {line: 53, column: 21},
+						end: {line: 60, column: 56}
 					},
 					_p0)(_p0._0._0);
 			case 'Timeout':
 				return _elm_lang$core$Native_Utils.crashCase(
 					'Component.Login',
 					{
-						start: {line: 48, column: 21},
-						end: {line: 55, column: 38}
+						start: {line: 53, column: 21},
+						end: {line: 60, column: 56}
 					},
 					_p0)('Timeout');
 			case 'NetworkError':
 				return _elm_lang$core$Native_Utils.crashCase(
 					'Component.Login',
 					{
-						start: {line: 48, column: 21},
-						end: {line: 55, column: 38}
+						start: {line: 53, column: 21},
+						end: {line: 60, column: 56}
 					},
 					_p0)('Network Error');
 			default:
 				return _elm_lang$core$Native_Utils.crashCase(
 					'Component.Login',
 					{
-						start: {line: 48, column: 21},
-						end: {line: 55, column: 38}
+						start: {line: 53, column: 21},
+						end: {line: 60, column: 56}
 					},
 					_p0)('Other error');
 		}
 	} else {
-		var _p5 = A2(_simonh1000$elm_jwt$Jwt$decodeToken, _user$project$Helpers_Types$decodeUserCreds, _p0._0);
+		var _p7 = _p0._0;
+		var _p5 = A2(_simonh1000$elm_jwt$Jwt$decodeToken, _user$project$Helpers_Types$decodeUserCreds, _p7);
 		if (_p5.ctor === 'Err') {
 			return _elm_lang$core$Native_Utils.crashCase(
 				'Component.Login',
 				{
-					start: {line: 53, column: 11},
-					end: {line: 55, column: 38}
+					start: {line: 58, column: 11},
+					end: {line: 60, column: 56}
 				},
 				_p5)('JWT error');
 		} else {
-			return _user$project$Component_Login$LoginSuccess(_p5._0);
+			return _user$project$Component_Login$LoginSuccess(
+				A2(_user$project$Component_Login$LoginDetails, _p5._0, _p7));
 		}
 	}
 };
@@ -10807,14 +10813,14 @@ var _user$project$Component_Login$attemptLogin = F2(
 	});
 var _user$project$Component_Login$update = F2(
 	function (msg, model) {
-		var _p7 = msg;
-		switch (_p7.ctor) {
+		var _p8 = msg;
+		switch (_p8.ctor) {
 			case 'UpdateUsername':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{username: _p7._0}),
+						{username: _p8._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'UpdatePassword':
@@ -10822,13 +10828,15 @@ var _user$project$Component_Login$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{password: _p7._0}),
+						{password: _p8._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'Login':
 				return {
 					ctor: '_Tuple2',
-					_0: model,
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{message: 'Attempting login...'}),
 					_1: A2(_user$project$Component_Login$attemptLogin, model.username, model.password)
 				};
 			default:
@@ -10915,7 +10923,7 @@ var _user$project$Component_Login$main = _elm_lang$html$Html$program(
 		init: _user$project$Component_Login$init,
 		view: _user$project$Component_Login$view,
 		update: _user$project$Component_Login$update,
-		subscriptions: function (_p8) {
+		subscriptions: function (_p9) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
 	})();

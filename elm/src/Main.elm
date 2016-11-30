@@ -20,7 +20,7 @@ type alias Model =
         project : Maybe Project.Project,
         login : Login.Model,
         view : View,
-        user : Maybe Types.UserCreds
+        user : Maybe Login.LoginDetails
     }
 
 model = Model Nothing Nothing (Login.Model "" "" "") LoginView Nothing

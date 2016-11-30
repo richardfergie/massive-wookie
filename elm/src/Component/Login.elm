@@ -16,18 +16,23 @@ type alias Model =
       message : String
     }
 
+type alias LoginDetails = {
+        usercreds : Types.UserCreds,
+        jwtToken : String
+    }
+
 init = (Model "" "" "", Cmd.none)
 
 type Msg = UpdateUsername String
          | UpdatePassword String
          | Login
-         | LoginSuccess Types.UserCreds
+         | LoginSuccess LoginDetails
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = case msg of
   UpdateUsername u -> ({model | username = u}, Cmd.none)
   UpdatePassword p -> ({model | password = p}, Cmd.none)
-  Login -> (model, attemptLogin model.username model.password)
+  Login -> ({model | message="Attempting login..."}, attemptLogin model.username model.password)
   LoginSuccess u -> ({model | message = "Login success"}, Cmd.none)
 
 view : Model -> Html Msg
@@ -52,7 +57,7 @@ validateLogin res = case res of
   Err e -> Debug.crash "Other error"
   Ok s -> case Jwt.decodeToken Types.decodeUserCreds s of
      Err e -> Debug.crash "JWT error"
-     Ok ucreds -> LoginSuccess ucreds
+     Ok ucreds -> LoginSuccess <| LoginDetails ucreds s
 
 main = Html.program {
            init = init,
