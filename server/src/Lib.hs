@@ -51,7 +51,7 @@ adminUser = Types.User "admin"
                        "sha256|20|q34s4hOsw5rbr7XUR1C9xQ==|sopSFIYk/EpafmgOG7jt88VDGtrB2BJg+iORj2gdUBo=" --"secret"
 
 createAdmin = do
-  muser <- Crud.getUser 1
+  muser <- Crud.getUser 0
   case muser of
     Nothing -> Crud.createUser adminUser >> return ()
     Just _ -> return ()
