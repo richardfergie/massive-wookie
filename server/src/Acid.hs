@@ -214,6 +214,12 @@ insertUser = insertWorld worldUsers
 deleteUser = deleteWorld worldUsers
 updateUser = updateWorld worldUsers
 getUser = getWorld worldUsers
+
+getUserByUsername :: Types.Username -> Query World (Maybe (Entity Types.User))
+getUserByUsername u = do
+  Table _ users <- fmap _worldUsers ask
+  return $ getOne $ getEQ u users
+
 deriving instance S.Serialize Types.User
 $(deriveSafeCopy 0 'base ''Types.User)
 
@@ -306,6 +312,7 @@ $(makeAcidic ''World ['insertGroup,
                       'deleteUser,
                       'updateUser,
                       'getUser,
+                      'getUserByUsername,
                       'gWorld
                      ])
 
@@ -346,3 +353,4 @@ acidStateCrud acid p = do
   Crud.DeleteUser x :>>= ps -> update' acid (DeleteUser x) >>= acidStateCrud acid . ps
   Crud.SetUser k v :>>= ps -> update' acid (UpdateUser k v) >>= acidStateCrud acid . ps
   Crud.CreateUser v :>>= ps -> update' acid (InsertUser v) >>= acidStateCrud acid . ps
+  Crud.GetUserByUsername u :>>= ps -> query' acid (GetUserByUsername u) >>= acidStateCrud acid . ps
