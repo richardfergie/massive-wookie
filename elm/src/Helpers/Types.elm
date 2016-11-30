@@ -55,3 +55,18 @@ decodeProject =
         |> required "group" int
         |> required "project" (nullable int)
         |> required "status" decodeProjectStatus
+
+type alias UserCreds = {
+        userCredsId : Int,
+        userCredsUsername : String,
+        userCredsExpires : Float,
+        userCredsIssued : Float
+    }
+
+decodeUserCreds : Decoder UserCreds
+decodeUserCreds =
+    decode UserCreds
+        |> required "_userCredsId" int
+        |> required "_userCredsUsername" string
+        |> required "_userCredsExpires" float
+        |> required "_userCredsIssued" float
