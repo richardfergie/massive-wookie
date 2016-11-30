@@ -122,10 +122,11 @@ instance Indexable FacilitatorIxs (Entity Types.Facilitator) where
                    (ixFun $ \x -> [Types.facilitatorUser $ Types.entityVal x])
                    (ixFun $ \x -> Types.facilitatorOrganisations $ Types.entityVal x)
 
-type ProjectIxs = '[Types.ProjectId]
+type ProjectIxs = '[Types.ProjectId, Types.FacilitatorId]
 
 instance Indexable ProjectIxs (Entity Types.Project) where
   indices = ixList (ixFun $ \x -> [Types.entityKey x])
+                   (ixFun $ \x -> [Types.facilitator $ Types.entityVal x])
 
 data World = World {
   _worldGroupMembers :: Table GroupMemberIxs Types.GroupMember,
@@ -231,6 +232,11 @@ $(deriveSafeCopy 0 'base ''Types.Facilitator)
 deleteFacilitator = deleteWorld worldFacilitators
 getFacilitator = getWorld worldFacilitators
 
+getFacilitatorByUserId :: Types.UserId -> Query World (Maybe (Types.Entity Types.Facilitator))
+getFacilitatorByUserId uid = do
+  Table _ facilitators <- fmap _worldFacilitators ask
+  return $ getOne $ getEQ uid facilitators
+
 checkFacilitatorKeys f = do
   ukey <- fmap isJust $ getUser $ Types.facilitatorUser f
   orgkeys <- fmap (all isJust) $ mapM getOrganisation $ Types.facilitatorOrganisations f
@@ -259,6 +265,11 @@ $(deriveSafeCopy 0 'base ''Types.Project)
 
 deleteProject = deleteWorld worldProjects
 getProject = getWorld worldProjects
+
+getProjectsByFacilitatorId :: Types.FacilitatorId -> Query World [Types.Entity Types.Project]
+getProjectsByFacilitatorId fid = do
+  Table _ projects <- fmap _worldProjects ask
+  return $ toList $ getEQ (fid::Types.FacilitatorId) projects
 
 checkProjectKeys p = do
   fkey <- fmap isJust $ getFacilitator $ Types.facilitator p
@@ -300,10 +311,12 @@ $(makeAcidic ''World ['insertGroup,
                       'deleteFacilitator,
                       'updateFacilitator,
                       'getFacilitator,
+                      'getFacilitatorByUserId,
                       'insertProject,
                       'deleteProject,
                       'updateProject,
                       'getProject,
+                      'getProjectsByFacilitatorId,
                       'insertOrganisation,
                       'deleteOrganisation,
                       'updateOrganisation,
@@ -343,11 +356,13 @@ acidStateCrud acid p = do
   Crud.DeleteFacilitator x :>>= ps -> update' acid (DeleteFacilitator x) >>= acidStateCrud acid . ps
   Crud.SetFacilitator k v :>>= ps -> update' acid (UpdateFacilitator k v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
   Crud.CreateFacilitator v :>>= ps -> update' acid (InsertFacilitator v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+  Crud.GetFacilitatorByUserId uid :>>= ps -> query' acid (GetFacilitatorByUserId uid) >>= acidStateCrud acid . ps
 
   Crud.GetProject x :>>= ps -> query' acid (GetProject x) >>= acidStateCrud acid . ps
   Crud.DeleteProject x :>>= ps -> update' acid (DeleteProject x) >>= acidStateCrud acid . ps
   Crud.SetProject k v :>>= ps -> update' acid (UpdateProject k v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
   Crud.CreateProject v :>>= ps -> update' acid (InsertProject v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+  Crud.GetProjectsByFacilitatorId fid :>>= ps -> query' acid (GetProjectsByFacilitatorId fid) >>= acidStateCrud acid . ps
 
   Crud.GetUser x :>>= ps -> query' acid (GetUser x) >>= acidStateCrud acid . ps
   Crud.DeleteUser x :>>= ps -> update' acid (DeleteUser x) >>= acidStateCrud acid . ps

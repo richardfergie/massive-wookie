@@ -9175,6 +9175,239 @@ var _elm_lang$http$Http$StringPart = F2(
 	});
 var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
 
+var _krisajenkins$remotedata$RemoteData$isNotAsked = function (data) {
+	var _p0 = data;
+	if (_p0.ctor === 'NotAsked') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var _krisajenkins$remotedata$RemoteData$isLoading = function (data) {
+	var _p1 = data;
+	if (_p1.ctor === 'Loading') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var _krisajenkins$remotedata$RemoteData$isFailure = function (data) {
+	var _p2 = data;
+	if (_p2.ctor === 'Failure') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var _krisajenkins$remotedata$RemoteData$isSuccess = function (data) {
+	var _p3 = data;
+	if (_p3.ctor === 'Success') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var _krisajenkins$remotedata$RemoteData$withDefault = F2(
+	function ($default, data) {
+		var _p4 = data;
+		if (_p4.ctor === 'Success') {
+			return _p4._0;
+		} else {
+			return $default;
+		}
+	});
+var _krisajenkins$remotedata$RemoteData$Success = function (a) {
+	return {ctor: 'Success', _0: a};
+};
+var _krisajenkins$remotedata$RemoteData$succeed = _krisajenkins$remotedata$RemoteData$Success;
+var _krisajenkins$remotedata$RemoteData$prism = {
+	reverseGet: _krisajenkins$remotedata$RemoteData$Success,
+	getOption: function (data) {
+		var _p5 = data;
+		if (_p5.ctor === 'Success') {
+			return _elm_lang$core$Maybe$Just(_p5._0);
+		} else {
+			return _elm_lang$core$Maybe$Nothing;
+		}
+	}
+};
+var _krisajenkins$remotedata$RemoteData$Failure = function (a) {
+	return {ctor: 'Failure', _0: a};
+};
+var _krisajenkins$remotedata$RemoteData$fromResult = function (result) {
+	var _p6 = result;
+	if (_p6.ctor === 'Err') {
+		return _krisajenkins$remotedata$RemoteData$Failure(_p6._0);
+	} else {
+		return _krisajenkins$remotedata$RemoteData$Success(_p6._0);
+	}
+};
+var _krisajenkins$remotedata$RemoteData$asCmd = _elm_lang$core$Task$attempt(_krisajenkins$remotedata$RemoteData$fromResult);
+var _krisajenkins$remotedata$RemoteData$Loading = {ctor: 'Loading'};
+var _krisajenkins$remotedata$RemoteData$NotAsked = {ctor: 'NotAsked'};
+var _krisajenkins$remotedata$RemoteData$map = F2(
+	function (f, data) {
+		var _p7 = data;
+		switch (_p7.ctor) {
+			case 'Success':
+				return _krisajenkins$remotedata$RemoteData$Success(
+					f(_p7._0));
+			case 'Loading':
+				return _krisajenkins$remotedata$RemoteData$Loading;
+			case 'NotAsked':
+				return _krisajenkins$remotedata$RemoteData$NotAsked;
+			default:
+				return _krisajenkins$remotedata$RemoteData$Failure(_p7._0);
+		}
+	});
+var _krisajenkins$remotedata$RemoteData$toMaybe = function (_p8) {
+	return A2(
+		_krisajenkins$remotedata$RemoteData$withDefault,
+		_elm_lang$core$Maybe$Nothing,
+		A2(_krisajenkins$remotedata$RemoteData$map, _elm_lang$core$Maybe$Just, _p8));
+};
+var _krisajenkins$remotedata$RemoteData$mapError = F2(
+	function (f, data) {
+		var _p9 = data;
+		switch (_p9.ctor) {
+			case 'Success':
+				return _krisajenkins$remotedata$RemoteData$Success(_p9._0);
+			case 'Failure':
+				return _krisajenkins$remotedata$RemoteData$Failure(
+					f(_p9._0));
+			case 'Loading':
+				return _krisajenkins$remotedata$RemoteData$Loading;
+			default:
+				return _krisajenkins$remotedata$RemoteData$NotAsked;
+		}
+	});
+var _krisajenkins$remotedata$RemoteData$mapBoth = F3(
+	function (successFn, errorFn, data) {
+		var _p10 = data;
+		switch (_p10.ctor) {
+			case 'Success':
+				return _krisajenkins$remotedata$RemoteData$Success(
+					successFn(_p10._0));
+			case 'Failure':
+				return _krisajenkins$remotedata$RemoteData$Failure(
+					errorFn(_p10._0));
+			case 'Loading':
+				return _krisajenkins$remotedata$RemoteData$Loading;
+			default:
+				return _krisajenkins$remotedata$RemoteData$NotAsked;
+		}
+	});
+var _krisajenkins$remotedata$RemoteData$andThen = F2(
+	function (f, data) {
+		var _p11 = data;
+		switch (_p11.ctor) {
+			case 'Success':
+				return f(_p11._0);
+			case 'Failure':
+				return _krisajenkins$remotedata$RemoteData$Failure(_p11._0);
+			case 'NotAsked':
+				return _krisajenkins$remotedata$RemoteData$NotAsked;
+			default:
+				return _krisajenkins$remotedata$RemoteData$Loading;
+		}
+	});
+var _krisajenkins$remotedata$RemoteData$andMap = F2(
+	function (wrappedValue, wrappedFunction) {
+		var _p12 = {ctor: '_Tuple2', _0: wrappedFunction, _1: wrappedValue};
+		_v11_5:
+		do {
+			_v11_4:
+			do {
+				_v11_3:
+				do {
+					_v11_2:
+					do {
+						switch (_p12._0.ctor) {
+							case 'Success':
+								switch (_p12._1.ctor) {
+									case 'Success':
+										return _krisajenkins$remotedata$RemoteData$Success(
+											_p12._0._0(_p12._1._0));
+									case 'Failure':
+										break _v11_2;
+									case 'Loading':
+										break _v11_4;
+									default:
+										return _krisajenkins$remotedata$RemoteData$NotAsked;
+								}
+							case 'Failure':
+								return _krisajenkins$remotedata$RemoteData$Failure(_p12._0._0);
+							case 'Loading':
+								switch (_p12._1.ctor) {
+									case 'Failure':
+										break _v11_2;
+									case 'Loading':
+										break _v11_3;
+									case 'NotAsked':
+										break _v11_3;
+									default:
+										break _v11_3;
+								}
+							default:
+								switch (_p12._1.ctor) {
+									case 'Failure':
+										break _v11_2;
+									case 'Loading':
+										break _v11_4;
+									case 'NotAsked':
+										break _v11_5;
+									default:
+										break _v11_5;
+								}
+						}
+					} while(false);
+					return _krisajenkins$remotedata$RemoteData$Failure(_p12._1._0);
+				} while(false);
+				return _krisajenkins$remotedata$RemoteData$Loading;
+			} while(false);
+			return _krisajenkins$remotedata$RemoteData$Loading;
+		} while(false);
+		return _krisajenkins$remotedata$RemoteData$NotAsked;
+	});
+var _krisajenkins$remotedata$RemoteData$append = F2(
+	function (a, b) {
+		return A2(
+			_krisajenkins$remotedata$RemoteData$andMap,
+			b,
+			A2(
+				_krisajenkins$remotedata$RemoteData$map,
+				F2(
+					function (v0, v1) {
+						return {ctor: '_Tuple2', _0: v0, _1: v1};
+					}),
+				a));
+	});
+var _krisajenkins$remotedata$RemoteData$update = F2(
+	function (f, remoteData) {
+		var _p13 = remoteData;
+		switch (_p13.ctor) {
+			case 'Success':
+				var _p14 = f(_p13._0);
+				var first = _p14._0;
+				var second = _p14._1;
+				return {
+					ctor: '_Tuple2',
+					_0: _krisajenkins$remotedata$RemoteData$Success(first),
+					_1: second
+				};
+			case 'NotAsked':
+				return {ctor: '_Tuple2', _0: _krisajenkins$remotedata$RemoteData$NotAsked, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'Loading':
+				return {ctor: '_Tuple2', _0: _krisajenkins$remotedata$RemoteData$Loading, _1: _elm_lang$core$Platform_Cmd$none};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _krisajenkins$remotedata$RemoteData$Failure(_p13._0),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+		}
+	});
+
 var _rluiten$elm_date_extra$Date_Extra_Core$prevMonth = function (month) {
 	var _p0 = month;
 	switch (_p0.ctor) {
@@ -10928,6 +11161,159 @@ var _user$project$Component_Login$main = _elm_lang$html$Html$program(
 		}
 	})();
 
+var _user$project$Component_Overview$view = function (model) {
+	var _p0 = {ctor: '_Tuple2', _0: model.projects, _1: model.jwtToken};
+	_v0_0:
+	do {
+		switch (_p0._0.ctor) {
+			case 'NotAsked':
+				if (_p0._1.ctor === 'Nothing') {
+					break _v0_0;
+				} else {
+					return A2(
+						_elm_lang$html$Html$div,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Starting to load projects...'),
+							_1: {ctor: '[]'}
+						});
+				}
+			case 'Loading':
+				if (_p0._1.ctor === 'Nothing') {
+					break _v0_0;
+				} else {
+					return A2(
+						_elm_lang$html$Html$div,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Loading projects'),
+							_1: {ctor: '[]'}
+						});
+				}
+			case 'Failure':
+				if (_p0._1.ctor === 'Nothing') {
+					break _v0_0;
+				} else {
+					return A2(
+						_elm_lang$html$Html$div,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Error loading projects'),
+							_1: {ctor: '[]'}
+						});
+				}
+			default:
+				if (_p0._1.ctor === 'Nothing') {
+					break _v0_0;
+				} else {
+					var _p1 = _p0._0._0;
+					if (_p1.ctor === '[]') {
+						return A2(
+							_elm_lang$html$Html$div,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('You have no projects'),
+								_1: {ctor: '[]'}
+							});
+					} else {
+						return A2(
+							_elm_lang$html$Html$div,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('You have some projects'),
+								_1: {ctor: '[]'}
+							});
+					}
+				}
+		}
+	} while(false);
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html$text('You must be logged in to see anything here'),
+			_1: {ctor: '[]'}
+		});
+};
+var _user$project$Component_Overview$Model = F2(
+	function (a, b) {
+		return {projects: a, jwtToken: b};
+	});
+var _user$project$Component_Overview$init = {
+	ctor: '_Tuple2',
+	_0: A2(_user$project$Component_Overview$Model, _krisajenkins$remotedata$RemoteData$NotAsked, _elm_lang$core$Maybe$Nothing),
+	_1: _elm_lang$core$Platform_Cmd$none
+};
+var _user$project$Component_Overview$ProjectResponse = function (a) {
+	return {ctor: 'ProjectResponse', _0: a};
+};
+var _user$project$Component_Overview$getProjects = function (model) {
+	return A2(
+		_elm_lang$http$Http$send,
+		function (_p2) {
+			return _user$project$Component_Overview$ProjectResponse(
+				_krisajenkins$remotedata$RemoteData$fromResult(_p2));
+		},
+		_elm_lang$http$Http$request(
+			{
+				method: 'GET',
+				url: 'http://localhost:8080/project',
+				body: _elm_lang$http$Http$emptyBody,
+				expect: _elm_lang$http$Http$expectJson(
+					_elm_lang$core$Json_Decode$list(
+						_user$project$Helpers_Types$decodeEntity(_user$project$Helpers_Types$decodeProject))),
+				headers: {
+					ctor: '::',
+					_0: A2(_elm_lang$http$Http$header, 'Content-Type', 'application/json'),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$http$Http$header,
+							'authorization',
+							A2(_elm_lang$core$Maybe$withDefault, '', model.jwtToken)),
+						_1: {ctor: '[]'}
+					}
+				},
+				timeout: _elm_lang$core$Maybe$Nothing,
+				withCredentials: false
+			}));
+};
+var _user$project$Component_Overview$update = F2(
+	function (msg, model) {
+		var _p3 = msg;
+		if (_p3.ctor === 'LoadProjects') {
+			return {
+				ctor: '_Tuple2',
+				_0: model,
+				_1: _user$project$Component_Overview$getProjects(model)
+			};
+		} else {
+			return {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Native_Utils.update(
+					model,
+					{projects: _p3._0}),
+				_1: _elm_lang$core$Platform_Cmd$none
+			};
+		}
+	});
+var _user$project$Component_Overview$main = _elm_lang$html$Html$program(
+	{
+		init: _user$project$Component_Overview$init,
+		view: _user$project$Component_Overview$view,
+		update: _user$project$Component_Overview$update,
+		subscriptions: function (_p4) {
+			return _elm_lang$core$Platform_Sub$none;
+		}
+	})();
+var _user$project$Component_Overview$LoadProjects = {ctor: 'LoadProjects'};
+
 var _user$project$Component_Project$update = F2(
 	function (msg, model) {
 		var _p0 = msg;
@@ -11019,16 +11405,18 @@ var _user$project$Main$groupSize = function (g) {
 		return _elm_lang$core$Dict$size(_p0._0.members);
 	}
 };
-var _user$project$Main$Model = F5(
-	function (a, b, c, d, e) {
-		return {group: a, project: b, login: c, view: d, user: e};
+var _user$project$Main$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {group: a, project: b, login: c, overview: d, view: e, user: f};
 	});
+var _user$project$Main$OverviewView = {ctor: 'OverviewView'};
 var _user$project$Main$LoginView = {ctor: 'LoginView'};
-var _user$project$Main$model = A5(
+var _user$project$Main$model = A6(
 	_user$project$Main$Model,
 	_elm_lang$core$Maybe$Nothing,
 	_elm_lang$core$Maybe$Nothing,
 	A3(_user$project$Component_Login$Model, '', '', ''),
+	_elm_lang$core$Tuple$first(_user$project$Component_Overview$init),
 	_user$project$Main$LoginView,
 	_elm_lang$core$Maybe$Nothing);
 var _user$project$Main$init = {ctor: '_Tuple2', _0: _user$project$Main$model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -11036,6 +11424,9 @@ var _user$project$Main$ProjectView = {ctor: 'ProjectView'};
 var _user$project$Main$GroupView = {ctor: 'GroupView'};
 var _user$project$Main$ChangeView = function (a) {
 	return {ctor: 'ChangeView', _0: a};
+};
+var _user$project$Main$UpdateOverview = function (a) {
+	return {ctor: 'UpdateOverview', _0: a};
 };
 var _user$project$Main$UpdateLogin = function (a) {
 	return {ctor: 'UpdateLogin', _0: a};
@@ -11075,6 +11466,12 @@ var _user$project$Main$update = F2(
 			case 'UpdateLogin':
 				if (_p1._0.ctor === 'LoginSuccess') {
 					var _p3 = _p1._0._0;
+					var overviewmodel = model.overview;
+					var newoverview = _elm_lang$core$Native_Utils.update(
+						overviewmodel,
+						{
+							jwtToken: _elm_lang$core$Maybe$Just(_p3.jwtToken)
+						});
 					var _p2 = A2(
 						_user$project$Component_Login$update,
 						_user$project$Component_Login$LoginSuccess(_p3),
@@ -11087,10 +11484,14 @@ var _user$project$Main$update = F2(
 							model,
 							{
 								user: _elm_lang$core$Maybe$Just(_p3),
-								view: _user$project$Main$GroupView,
-								login: newlogin
+								view: _user$project$Main$OverviewView,
+								login: newlogin,
+								overview: newoverview
 							}),
-						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$UpdateLogin, msg)
+						_1: A2(
+							_elm_lang$core$Platform_Cmd$map,
+							_user$project$Main$UpdateOverview,
+							_user$project$Component_Overview$getProjects(newoverview))
 					};
 				} else {
 					var _p4 = A2(_user$project$Component_Login$update, _p1._0, model.login);
@@ -11104,14 +11505,40 @@ var _user$project$Main$update = F2(
 						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$UpdateLogin, msg)
 					};
 				}
-			default:
+			case 'UpdateOverview':
+				var _p5 = A2(_user$project$Component_Overview$update, _p1._0, model.overview);
+				var newoverview = _p5._0;
+				var cmd = _p5._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{view: _p1._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
+						{overview: newoverview}),
+					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$UpdateOverview, cmd)
 				};
+			default:
+				var _p7 = _p1._0;
+				var _p6 = _p7;
+				if (_p6.ctor === 'OverviewView') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{view: _user$project$Main$OverviewView}),
+						_1: A2(
+							_elm_lang$core$Platform_Cmd$map,
+							_user$project$Main$UpdateOverview,
+							_user$project$Component_Overview$getProjects(model.overview))
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{view: _p7}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
 		}
 	});
 var _user$project$Main$UpdateProject = function (a) {
@@ -11122,11 +11549,11 @@ var _user$project$Main$projectView = function (p) {
 		_elm_lang$html$Html$map,
 		_user$project$Main$UpdateProject,
 		function () {
-			var _p5 = p;
-			if (_p5.ctor === 'Nothing') {
+			var _p8 = p;
+			if (_p8.ctor === 'Nothing') {
 				return _user$project$Component_Project$view(_user$project$Component_Project$model);
 			} else {
-				return _user$project$Component_Project$view(_p5._0);
+				return _user$project$Component_Project$view(_p8._0);
 			}
 		}());
 };
@@ -11138,17 +11565,17 @@ var _user$project$Main$groupView = function (g) {
 		_elm_lang$html$Html$map,
 		_user$project$Main$UpdateGroup,
 		function () {
-			var _p6 = g;
-			if (_p6.ctor === 'Nothing') {
+			var _p9 = g;
+			if (_p9.ctor === 'Nothing') {
 				return _user$project$Component_Group$view(_user$project$Component_Group$model);
 			} else {
-				return _user$project$Component_Group$view(_p6._0);
+				return _user$project$Component_Group$view(_p9._0);
 			}
 		}());
 };
 var _user$project$Main$view = function (m) {
-	var _p7 = m.view;
-	switch (_p7.ctor) {
+	var _p10 = m.view;
+	switch (_p10.ctor) {
 		case 'GroupView':
 			return A2(
 				_elm_lang$html$Html$div,
@@ -11159,8 +11586,8 @@ var _user$project$Main$view = function (m) {
 					_1: {
 						ctor: '::',
 						_0: function () {
-							var _p8 = _user$project$Main$groupSize(m.group);
-							if (_p8 === 0) {
+							var _p11 = _user$project$Main$groupSize(m.group);
+							if (_p11 === 0) {
 								return A2(
 									_elm_lang$html$Html$button,
 									{ctor: '[]'},
@@ -11217,11 +11644,16 @@ var _user$project$Main$view = function (m) {
 						_1: {ctor: '[]'}
 					}
 				});
-		default:
+		case 'LoginView':
 			return A2(
 				_elm_lang$html$Html$map,
 				_user$project$Main$UpdateLogin,
 				_user$project$Component_Login$view(m.login));
+		default:
+			return A2(
+				_elm_lang$html$Html$map,
+				_user$project$Main$UpdateOverview,
+				_user$project$Component_Overview$view(m.overview));
 	}
 };
 var _user$project$Main$main = _elm_lang$html$Html$program(
@@ -11229,7 +11661,7 @@ var _user$project$Main$main = _elm_lang$html$Html$program(
 		init: _user$project$Main$init,
 		view: _user$project$Main$view,
 		update: _user$project$Main$update,
-		subscriptions: function (_p9) {
+		subscriptions: function (_p12) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
 	})();

@@ -6,6 +6,7 @@ import Html.Events exposing (..)
 import Component.Group as Group
 import Component.Project as Project
 import Component.Login as Login
+import Component.Overview as Overview
 import Helpers.Types as Types
 import Maybe
 import Dict
@@ -13,17 +14,19 @@ import Dict
 type View = GroupView
           | ProjectView
           | LoginView
+          | OverviewView
 
 type alias Model =
     {
         group : Maybe Group.Group,
         project : Maybe Project.Project,
         login : Login.Model,
+        overview : Overview.Model,
         view : View,
         user : Maybe Login.LoginDetails
     }
 
-model = Model Nothing Nothing (Login.Model "" "" "") LoginView Nothing
+model = Model Nothing Nothing (Login.Model "" "" "") (Tuple.first Overview.init) LoginView Nothing
 
 init = (model, Cmd.none)
 
@@ -34,6 +37,7 @@ groupSize g = case g of
 type Msg = UpdateGroup Group.Msg
          | UpdateProject Project.Msg
          | UpdateLogin Login.Msg
+         | UpdateOverview Overview.Msg
          | ChangeView View
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -43,10 +47,16 @@ update msg model = case msg of
   UpdateProject p -> let newproject = Project.update p <| Maybe.withDefault Project.model model.project
                      in ({model | project = Just newproject},Cmd.none)
   UpdateLogin (Login.LoginSuccess u) -> let (newlogin,msg) = Login.update (Login.LoginSuccess u) model.login
-                                  in ({model | user = Just u, view = GroupView, login=newlogin}, Cmd.map UpdateLogin msg)
+                                            overviewmodel = model.overview
+                                            newoverview = {overviewmodel | jwtToken = Just u.jwtToken}
+                                  in ({model | user = Just u, view=OverviewView, login=newlogin, overview=newoverview}, Cmd.map UpdateOverview <| Overview.getProjects newoverview)
   UpdateLogin l -> let (newlogin,msg) = Login.update l model.login
                    in ({model | login=newlogin}, Cmd.map UpdateLogin msg)
-  ChangeView v -> ({model | view = v}, Cmd.none)
+  UpdateOverview o -> let (newoverview,cmd) = Overview.update o model.overview
+                      in ({model | overview = newoverview}, Cmd.map UpdateOverview cmd)
+  ChangeView v -> case v of
+    OverviewView -> ({model | view = OverviewView},Cmd.map UpdateOverview <| Overview.getProjects model.overview )
+    _ -> ({model | view = v}, Cmd.none)
 
 view : Model -> Html Msg
 view m = case m.view of
@@ -61,6 +71,7 @@ view m = case m.view of
                   button [onClick (ChangeView GroupView)] [text "<- Group"]
                       ]
   LoginView -> Html.map UpdateLogin <| Login.view m.login
+  OverviewView -> Html.map UpdateOverview <| Overview.view m.overview
 
 groupView g = Html.map UpdateGroup <| case g of
   Nothing -> Group.view Group.model

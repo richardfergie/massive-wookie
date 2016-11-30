@@ -27,14 +27,19 @@ data Crud a where
   DeleteFacilitator :: FacilitatorId -> Crud ()
   GetFacilitator :: FacilitatorId
                           -> Crud (Maybe (Entity Facilitator))
+  GetFacilitatorByUserId :: UserId -> Crud (Maybe (Entity Facilitator))
+
   CreateGroup :: Group -> Crud (Entity Group)
   SetGroup :: GroupId -> Group -> Crud (Entity Group)
   DeleteGroup :: GroupId -> Crud ()
   GetGroup :: GroupId -> Crud (Maybe (Entity Group))
+
   CreateProject :: Project -> Crud (Entity Project)
   SetProject :: ProjectId -> Project -> Crud (Entity Project)
   DeleteProject :: ProjectId -> Crud ()
   GetProject :: ProjectId -> Crud (Maybe (Entity Project))
+  GetProjectsByFacilitatorId :: FacilitatorId -> Crud [Entity Project]
+
   CreateGroupMember :: GroupMember -> Crud (Entity GroupMember)
   SetGroupMember :: GroupMemberId
                           -> GroupMember -> Crud (Entity GroupMember)
@@ -57,22 +62,29 @@ createFacilitator = (.) singleton CreateFacilitator
 setFacilitator x y = ($) singleton (SetFacilitator x y)
 deleteFacilitator = (.) singleton DeleteFacilitator
 getFacilitator = (.) singleton GetFacilitator
+getFacilitatorByUserId = singleton . GetFacilitatorByUserId
+
 createGroup = (.) singleton CreateGroup
 setGroup x y = ($) singleton (SetGroup x y)
 deleteGroup = (.) singleton DeleteGroup
 getGroup = (.) singleton GetGroup
+
 createProject = (.) singleton CreateProject
 setProject x y = ($) singleton (SetProject x y)
 deleteProject = (.) singleton DeleteProject
 getProject = (.) singleton GetProject
+getProjectsByFacilitatorId = singleton . GetProjectsByFacilitatorId
+
 createGroupMember = (.) singleton CreateGroupMember
 setGroupMember x y = ($) singleton (SetGroupMember x y)
 deleteGroupMember = (.) singleton DeleteGroupMember
 getGroupMember = (.) singleton GetGroupMember
+
 createOrganisation = (.) singleton CreateOrganisation
 setOrganisation x y = ($) singleton (SetOrganisation x y)
 deleteOrganisation = (.) singleton DeleteOrganisation
 getOrganisation = (.) singleton GetOrganisation
+
 createUser = (.) singleton CreateUser
 setUser x y = ($) singleton (SetUser x y)
 deleteUser = (.) singleton DeleteUser

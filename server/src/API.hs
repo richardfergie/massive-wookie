@@ -14,7 +14,8 @@ import Foundation
 import Auth
 import Control.Monad.Reader(ask)
 
-type CRUD a = "create" :> ReqBody '[JSON] a :> Post '[JSON] (Types.Entity a)
+type CRUD a =  Get '[JSON] [Types.Entity a]
+               :<|> "create" :> ReqBody '[JSON] a :> Post '[JSON] (Types.Entity a)
                :<|> Capture "id" Int :> DeleteNoContent '[JSON] NoContent
                :<|> Capture "id" Int :> ReqBody '[JSON] a :> Put '[JSON] (Types.Entity a)
                :<|> Capture "id" Int :> Get '[JSON] (Types.Entity a)
@@ -36,34 +37,40 @@ crudder creator deleter setter getter = (\ i -> requireUser >> (runDB $ creator 
                   )
 
 crudGroup :: ServerT (CRUD Types.Group) (AppServer)
-crudGroup = crudder Crud.createGroup
-                    Crud.deleteGroup
-                    Crud.setGroup
-                    Crud.getGroup
+crudGroup = return [] :<|> (crudder Crud.createGroup
+                                    Crud.deleteGroup
+                                    Crud.setGroup
+                                    Crud.getGroup)
 
 crudGroupMember :: ServerT (CRUD Types.GroupMember) (AppServer)
-crudGroupMember = crudder Crud.createGroupMember
-                          Crud.deleteGroupMember
-                          Crud.setGroupMember
-                          Crud.getGroupMember
+crudGroupMember = return [] :<|> (crudder Crud.createGroupMember
+                                          Crud.deleteGroupMember
+                                          Crud.setGroupMember
+                                          Crud.getGroupMember)
+
+projectsByUserId uid = do
+  mfac <- Crud.getFacilitatorByUserId uid
+  case mfac of
+    Nothing -> return [] --maybe throw error?
+    Just (Types.Entity facid _) -> Crud.getProjectsByFacilitatorId facid
 
 crudProject :: ServerT (CRUD Types.Project) (AppServer)
-crudProject = crudder Crud.createProject
-                      Crud.deleteProject
-                      Crud.setProject
-                      Crud.getProject
+crudProject = (requireUser >>= runDB . projectsByUserId . _userCredsId) :<|> (crudder Crud.createProject
+                                      Crud.deleteProject
+                                      Crud.setProject
+                                      Crud.getProject)
 
 crudFacilitator :: ServerT (CRUD Types.Facilitator) (AppServer)
-crudFacilitator = crudder Crud.createFacilitator
-                          Crud.deleteFacilitator
-                          Crud.setFacilitator
-                          Crud.getFacilitator
+crudFacilitator = return [] :<|> (crudder Crud.createFacilitator
+                                          Crud.deleteFacilitator
+                                          Crud.setFacilitator
+                                          Crud.getFacilitator)
 
 crudOrganisation :: ServerT (CRUD Types.Organisation) (AppServer)
-crudOrganisation = crudder Crud.createOrganisation
-                           Crud.deleteOrganisation
-                           Crud.setOrganisation
-                           Crud.getOrganisation
+crudOrganisation = return [] :<|> (crudder Crud.createOrganisation
+                                           Crud.deleteOrganisation
+                                           Crud.setOrganisation
+                                           Crud.getOrganisation)
 
 apiServer :: ServerT API (AppServer)
 apiServer = crudGroupMember
