@@ -47,9 +47,9 @@ type Msg = UpdateGroup Group.Msg
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = case msg of
   Tick t -> let oldmessages = model.messages
-                newmessages = List.filter (\x -> x.messageTime > (t-(Time.second * 5))) oldmessages
+                newmessages = List.filter (\x -> x.messageExpires > t) oldmessages
             in ({model | messages = newmessages}, Cmd.none)
-  Logout -> ({model | user = Nothing, view=LoginView}, Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged out" )
+  Logout -> ({model | user = Nothing, view=LoginView}, Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged out" 3)
   UpdateGroup g -> let newgroup = Group.update g <| Maybe.withDefault Group.model model.group
                    in ({model | group = Just newgroup}, Cmd.none)
   UpdateProject p -> let newproject = Project.update p <| Maybe.withDefault Project.model model.project
@@ -61,7 +61,7 @@ update msg model = case msg of
                                             overviewmodel = model.overview
                                             newoverview = {overviewmodel | jwtToken = Just u.jwtToken}
                                   in ({model | user = Just u, view=OverviewView, login=newlogin, overview=newoverview}, Cmd.batch [Cmd.map UpdateOverview <| Overview.getOverviewData newoverview,
-                          Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged in"]
+                          Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged in" 3]
                                           )
   UpdateLogin l -> let (newlogin,msg) = Login.update l model.login
                    in ({model | login=newlogin}, Cmd.map UpdateLogin msg)
@@ -97,14 +97,14 @@ viewMessages model = div [] <| List.map (\x -> div [] [text x.messageBody]) mode
 
 navBar : Model -> Html Msg
 navBar model = case model.user of
-  Nothing -> nav [class "primary", class "container"] [
+  Nothing -> nav [class "primary"] [
     ul [] [
       li [] [
            a [] [text "Login"]
                ]
         ]
              ]
-  Just _ -> nav [class "primary", class "container"] [
+  Just _ -> nav [class "primary"] [
              ul [] [
                      li [] [a [onClick (ChangeView OverviewView)] [text "Overview"]],
                      li [] [a [] [text "Dummy"]],
@@ -126,5 +126,5 @@ main = Html.program {
            init = init,
            view = view,
            update = update,
-           subscriptions = \_ -> Time.every (5 * Time.second) (\t -> Tick t)
+           subscriptions = \_ -> Time.every (Time.second) (\t -> Tick t)
        }

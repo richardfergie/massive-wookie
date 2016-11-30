@@ -7,44 +7,34 @@ import Date exposing (..)
 import Helpers.Types exposing (..)
 import Date.Extra.Create exposing (dateFromFields)
 import Date.Extra.Core exposing (intToMonth)
-
-type alias GroupMember =
-    {
-        firstname : String,
-        lastname : String,
-        dob : Date
-    }
+import Generated.Types exposing (..)
+import Helpers.Types as Types
+import Http
 
 type Msg = UpdateFirstname String
          | UpdateLastname String
          | UpdateDob String
 
-type alias Model = {
-        groupmember : Form GroupMember
-    }
-
-view : Form GroupMember -> Html Msg
+view : GroupMember -> Html Msg
 view model = div [] [
-              displayMessage model,
               input [placeholder "First name", onInput UpdateFirstname] [],
               input [placeholder "Last name", onInput UpdateLastname] [],
               label [] [text "Date of birth"],
               node "input" [type_ "date", onInput UpdateDob] []
              ]
 
-update : Msg -> Form GroupMember -> Form GroupMember
+update : Msg -> GroupMember -> GroupMember
 update msg model =
-    let result = model.result
-    in case msg of
-      UpdateFirstname x -> {model | result = { result | firstname = x}}
-      UpdateLastname x -> {model | result = {result | lastname = x}}
+    case msg of
+      UpdateFirstname x -> {model | firstname = x}
+      UpdateLastname x -> {model | lastname = x}
       UpdateDob x -> case fromString x of
-        Ok d -> {model | result = {result | dob = d}}
-        Err e -> {model | message = Just e}
+        Ok d -> {model | dob = d}
+        Err e -> model
 
 startDate = dateFromFields 2000 (intToMonth 1) 1 0 0 0 0
 
-model = Form (GroupMember "" "" startDate) Nothing
+model = GroupMember "" "" startDate
 
 main = Html.beginnerProgram {
            model = model,

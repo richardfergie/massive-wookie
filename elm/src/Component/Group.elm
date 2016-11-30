@@ -8,20 +8,26 @@ import Html.Events exposing (..)
 import Dict
 import List
 import Maybe
+import Generated.Types exposing (..)
 
 type alias Group =
     {
         name : String,
-        members : Dict.Dict Int GroupMember.GroupMember
+        members : Dict.Dict Int GroupMember
     }
+
+type GroupTest = ExistingGroup {
+        groupId : Int,
+        group : Group
+    } | NewGroup { group : Group}
 
 type Msg = UpdateGroupName String
          | UpdateGroupMember Int GroupMember.Msg
          | AddGroupMember
          | RemoveGroupMember Int
 
-viewGroupMembers : Dict.Dict Int GroupMember.GroupMember -> List (Html Msg)
-viewGroupMembers d = Dict.foldl (\k v acc -> acc ++ [Html.map (UpdateGroupMember k) (GroupMember.view (Types.initialForm v)), button [onClick <| RemoveGroupMember k] [text "Remove"]]) [] d
+viewGroupMembers : Dict.Dict Int GroupMember -> List (Html Msg)
+viewGroupMembers d = Dict.foldl (\k v acc -> acc ++ [Html.map (UpdateGroupMember k) (GroupMember.view v), button [onClick <| RemoveGroupMember k] [text "Remove"]]) [] d
 
 view : Group -> Html Msg
 view model = div [] <| [input [placeholder "Group name", onInput UpdateGroupName] [],
@@ -41,9 +47,9 @@ update msg model =
   in case msg of
     UpdateGroupName n -> {model | name = n}
     AddGroupMember -> let k = Maybe.withDefault 1 <| List.maximum <| Dict.keys members
-                      in {model | members = Dict.insert (k+1) (GroupMember.GroupMember "" "" GroupMember.startDate) members}
+                      in {model | members = Dict.insert (k+1) (GroupMember "" "" GroupMember.startDate) members}
     RemoveGroupMember k -> { model | members = Dict.remove k members}
-    UpdateGroupMember k m -> let r = Maybe.map (\x -> Types.getResult <| GroupMember.update m <| Types.initialForm x) (Dict.get k members)
+    UpdateGroupMember k m -> let r = Maybe.map (\x -> GroupMember.update m x) (Dict.get k members)
       in case r of
         Nothing -> model
         Just res -> {model | members = Dict.insert k res members}

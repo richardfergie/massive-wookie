@@ -33,7 +33,7 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = case msg of
   UpdateUsername u -> ({model | username = u}, Cmd.none)
   UpdatePassword p -> ({model | password = p}, Cmd.none)
-  Login -> (model, Cmd.batch [Cmd.map Message <| Types.generateMessage Types.Standard "Attempting login",
+  Login -> (model, Cmd.batch [Cmd.map Message <| Types.generateMessage Types.Standard "Attempting login" 1,
                               attemptLogin model.username model.password])
   LoginSuccess u -> (model, Cmd.none)
   Message m -> (model, Cmd.none)

@@ -16,11 +16,11 @@ type alias Message =
     {
         messageType : MessageType,
         messageBody : String,
-        messageTime : Time.Time
+        messageExpires : Time.Time
     }
 
-generateMessage : MessageType -> String -> Cmd Message
-generateMessage mtype mbody = Task.perform identity <| Task.map (Message mtype mbody) Time.now
+generateMessage : MessageType -> String -> Float -> Cmd Message
+generateMessage mtype mbody duration = Task.perform identity <| Task.map (\x -> Message mtype mbody (x+(Time.second * duration))) Time.now
 
 type alias Form a =
     {

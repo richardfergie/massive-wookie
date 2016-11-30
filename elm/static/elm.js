@@ -10599,16 +10599,18 @@ var _user$project$Helpers_Types$pureCommand = function (x) {
 };
 var _user$project$Helpers_Types$Message = F3(
 	function (a, b, c) {
-		return {messageType: a, messageBody: b, messageTime: c};
+		return {messageType: a, messageBody: b, messageExpires: c};
 	});
-var _user$project$Helpers_Types$generateMessage = F2(
-	function (mtype, mbody) {
+var _user$project$Helpers_Types$generateMessage = F3(
+	function (mtype, mbody, duration) {
 		return A2(
 			_elm_lang$core$Task$perform,
 			_elm_lang$core$Basics$identity,
 			A2(
 				_elm_lang$core$Task$map,
-				A2(_user$project$Helpers_Types$Message, mtype, mbody),
+				function (x) {
+					return A3(_user$project$Helpers_Types$Message, mtype, mbody, x + (_elm_lang$core$Time$second * duration));
+				},
 				_elm_lang$core$Time$now));
 	});
 var _user$project$Helpers_Types$Form = F2(
@@ -10666,57 +10668,30 @@ var _user$project$Component_GroupMember$startDate = A7(
 	0,
 	0,
 	0);
+var _user$project$Component_GroupMember$model = A3(_user$project$Generated_Types$GroupMember, '', '', _user$project$Component_GroupMember$startDate);
 var _user$project$Component_GroupMember$update = F2(
 	function (msg, model) {
-		var result = model.result;
 		var _p0 = msg;
 		switch (_p0.ctor) {
 			case 'UpdateFirstname':
 				return _elm_lang$core$Native_Utils.update(
 					model,
-					{
-						result: _elm_lang$core$Native_Utils.update(
-							result,
-							{firstname: _p0._0})
-					});
+					{firstname: _p0._0});
 			case 'UpdateLastname':
 				return _elm_lang$core$Native_Utils.update(
 					model,
-					{
-						result: _elm_lang$core$Native_Utils.update(
-							result,
-							{lastname: _p0._0})
-					});
+					{lastname: _p0._0});
 			default:
 				var _p1 = _elm_lang$core$Date$fromString(_p0._0);
 				if (_p1.ctor === 'Ok') {
 					return _elm_lang$core$Native_Utils.update(
 						model,
-						{
-							result: _elm_lang$core$Native_Utils.update(
-								result,
-								{dob: _p1._0})
-						});
+						{dob: _p1._0});
 				} else {
-					return _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							message: _elm_lang$core$Maybe$Just(_p1._0)
-						});
+					return model;
 				}
 		}
 	});
-var _user$project$Component_GroupMember$GroupMember = F3(
-	function (a, b, c) {
-		return {firstname: a, lastname: b, dob: c};
-	});
-var _user$project$Component_GroupMember$model = A2(
-	_user$project$Helpers_Types$Form,
-	A3(_user$project$Component_GroupMember$GroupMember, '', '', _user$project$Component_GroupMember$startDate),
-	_elm_lang$core$Maybe$Nothing);
-var _user$project$Component_GroupMember$Model = function (a) {
-	return {groupmember: a};
-};
 var _user$project$Component_GroupMember$UpdateDob = function (a) {
 	return {ctor: 'UpdateDob', _0: a};
 };
@@ -10732,17 +10707,28 @@ var _user$project$Component_GroupMember$view = function (model) {
 		{ctor: '[]'},
 		{
 			ctor: '::',
-			_0: _user$project$Helpers_Types$displayMessage(model),
+			_0: A2(
+				_elm_lang$html$Html$input,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$placeholder('First name'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_GroupMember$UpdateFirstname),
+						_1: {ctor: '[]'}
+					}
+				},
+				{ctor: '[]'}),
 			_1: {
 				ctor: '::',
 				_0: A2(
 					_elm_lang$html$Html$input,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$placeholder('First name'),
+						_0: _elm_lang$html$Html_Attributes$placeholder('Last name'),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_GroupMember$UpdateFirstname),
+							_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_GroupMember$UpdateLastname),
 							_1: {ctor: '[]'}
 						}
 					},
@@ -10750,44 +10736,29 @@ var _user$project$Component_GroupMember$view = function (model) {
 				_1: {
 					ctor: '::',
 					_0: A2(
-						_elm_lang$html$Html$input,
+						_elm_lang$html$Html$label,
+						{ctor: '[]'},
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$placeholder('Last name'),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_GroupMember$UpdateLastname),
-								_1: {ctor: '[]'}
-							}
-						},
-						{ctor: '[]'}),
+							_0: _elm_lang$html$Html$text('Date of birth'),
+							_1: {ctor: '[]'}
+						}),
 					_1: {
 						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$label,
-							{ctor: '[]'},
+						_0: A3(
+							_elm_lang$html$Html$node,
+							'input',
 							{
 								ctor: '::',
-								_0: _elm_lang$html$Html$text('Date of birth'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {
-							ctor: '::',
-							_0: A3(
-								_elm_lang$html$Html$node,
-								'input',
-								{
+								_0: _elm_lang$html$Html_Attributes$type_('date'),
+								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$type_('date'),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_GroupMember$UpdateDob),
-										_1: {ctor: '[]'}
-									}
-								},
-								{ctor: '[]'}),
-							_1: {ctor: '[]'}
-						}
+									_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_GroupMember$UpdateDob),
+									_1: {ctor: '[]'}
+								}
+							},
+							{ctor: '[]'}),
+						_1: {ctor: '[]'}
 					}
 				}
 			}
@@ -10817,7 +10788,7 @@ var _user$project$Component_Group$update = F2(
 						members: A3(
 							_elm_lang$core$Dict$insert,
 							k + 1,
-							A3(_user$project$Component_GroupMember$GroupMember, '', '', _user$project$Component_GroupMember$startDate),
+							A3(_user$project$Generated_Types$GroupMember, '', '', _user$project$Component_GroupMember$startDate),
 							members)
 					});
 			case 'RemoveGroupMember':
@@ -10831,11 +10802,7 @@ var _user$project$Component_Group$update = F2(
 				var r = A2(
 					_elm_lang$core$Maybe$map,
 					function (x) {
-						return _user$project$Helpers_Types$getResult(
-							A2(
-								_user$project$Component_GroupMember$update,
-								_p0._1,
-								_user$project$Helpers_Types$initialForm(x)));
+						return A2(_user$project$Component_GroupMember$update, _p0._1, x);
 					},
 					A2(_elm_lang$core$Dict$get, _p2, members));
 				var _p1 = r;
@@ -10876,8 +10843,7 @@ var _user$project$Component_Group$viewGroupMembers = function (d) {
 						_0: A2(
 							_elm_lang$html$Html$map,
 							_user$project$Component_Group$UpdateGroupMember(k),
-							_user$project$Component_GroupMember$view(
-								_user$project$Helpers_Types$initialForm(v))),
+							_user$project$Component_GroupMember$view(v)),
 						_1: {
 							ctor: '::',
 							_0: A2(
@@ -11110,7 +11076,7 @@ var _user$project$Component_Login$update = F2(
 							_0: A2(
 								_elm_lang$core$Platform_Cmd$map,
 								_user$project$Component_Login$Message,
-								A2(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Attempting login')),
+								A3(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Attempting login', 1)),
 							_1: {
 								ctor: '::',
 								_0: A2(_user$project$Component_Login$attemptLogin, model.username, model.password),
@@ -11647,11 +11613,7 @@ var _user$project$Main$navBar = function (model) {
 			{
 				ctor: '::',
 				_0: _elm_lang$html$Html_Attributes$class('primary'),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('container'),
-					_1: {ctor: '[]'}
-				}
+				_1: {ctor: '[]'}
 			},
 			{
 				ctor: '::',
@@ -11685,11 +11647,7 @@ var _user$project$Main$navBar = function (model) {
 			{
 				ctor: '::',
 				_0: _elm_lang$html$Html_Attributes$class('primary'),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('container'),
-					_1: {ctor: '[]'}
-				}
+				_1: {ctor: '[]'}
 			},
 			{
 				ctor: '::',
@@ -11779,7 +11737,7 @@ var _user$project$Main$update = F2(
 				var newmessages = A2(
 					_elm_lang$core$List$filter,
 					function (x) {
-						return _elm_lang$core$Native_Utils.cmp(x.messageTime, _p2._0 - (_elm_lang$core$Time$second * 5)) > 0;
+						return _elm_lang$core$Native_Utils.cmp(x.messageExpires, _p2._0) > 0;
 					},
 					oldmessages);
 				return {
@@ -11795,7 +11753,13 @@ var _user$project$Main$update = F2(
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{user: _elm_lang$core$Maybe$Nothing, view: _user$project$Main$LoginView}),
-					_1: _elm_lang$core$Platform_Cmd$none
+					_1: A2(
+						_elm_lang$core$Platform_Cmd$map,
+						function (_p3) {
+							return _user$project$Main$UpdateLogin(
+								_user$project$Component_Login$Message(_p3));
+						},
+						A3(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Logged out', 3))
 				};
 			case 'UpdateGroup':
 				var newgroup = A2(
@@ -11838,25 +11802,25 @@ var _user$project$Main$update = F2(
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					case 'LoginSuccess':
-						var _p5 = _p2._0._0;
+						var _p6 = _p2._0._0;
 						var overviewmodel = model.overview;
 						var newoverview = _elm_lang$core$Native_Utils.update(
 							overviewmodel,
 							{
-								jwtToken: _elm_lang$core$Maybe$Just(_p5.jwtToken)
+								jwtToken: _elm_lang$core$Maybe$Just(_p6.jwtToken)
 							});
-						var _p3 = A2(
+						var _p4 = A2(
 							_user$project$Component_Login$update,
-							_user$project$Component_Login$LoginSuccess(_p5),
+							_user$project$Component_Login$LoginSuccess(_p6),
 							model.login);
-						var newlogin = _p3._0;
-						var msg = _p3._1;
+						var newlogin = _p4._0;
+						var msg = _p4._1;
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									user: _elm_lang$core$Maybe$Just(_p5),
+									user: _elm_lang$core$Maybe$Just(_p6),
 									view: _user$project$Main$OverviewView,
 									login: newlogin,
 									overview: newoverview
@@ -11872,19 +11836,19 @@ var _user$project$Main$update = F2(
 										ctor: '::',
 										_0: A2(
 											_elm_lang$core$Platform_Cmd$map,
-											function (_p4) {
+											function (_p5) {
 												return _user$project$Main$UpdateLogin(
-													_user$project$Component_Login$Message(_p4));
+													_user$project$Component_Login$Message(_p5));
 											},
-											A2(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Logged in')),
+											A3(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Logged in', 3)),
 										_1: {ctor: '[]'}
 									}
 								})
 						};
 					default:
-						var _p6 = A2(_user$project$Component_Login$update, _p2._0, model.login);
-						var newlogin = _p6._0;
-						var msg = _p6._1;
+						var _p7 = A2(_user$project$Component_Login$update, _p2._0, model.login);
+						var newlogin = _p7._0;
+						var msg = _p7._1;
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -11912,9 +11876,9 @@ var _user$project$Main$update = F2(
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					default:
-						var _p7 = A2(_user$project$Component_Overview$update, _p2._0, model.overview);
-						var newoverview = _p7._0;
-						var cmd = _p7._1;
+						var _p8 = A2(_user$project$Component_Overview$update, _p2._0, model.overview);
+						var newoverview = _p8._0;
+						var cmd = _p8._1;
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -11924,9 +11888,9 @@ var _user$project$Main$update = F2(
 						};
 				}
 			default:
-				var _p9 = _p2._0;
-				var _p8 = _p9;
-				if (_p8.ctor === 'OverviewView') {
+				var _p10 = _p2._0;
+				var _p9 = _p10;
+				if (_p9.ctor === 'OverviewView') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -11942,7 +11906,7 @@ var _user$project$Main$update = F2(
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{view: _p9}),
+							{view: _p10}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
@@ -11956,11 +11920,11 @@ var _user$project$Main$projectView = function (p) {
 		_elm_lang$html$Html$map,
 		_user$project$Main$UpdateProject,
 		function () {
-			var _p10 = p;
-			if (_p10.ctor === 'Nothing') {
+			var _p11 = p;
+			if (_p11.ctor === 'Nothing') {
 				return _user$project$Component_Project$view(_user$project$Component_Project$model);
 			} else {
-				return _user$project$Component_Project$view(_p10._0);
+				return _user$project$Component_Project$view(_p11._0);
 			}
 		}());
 };
@@ -11972,11 +11936,11 @@ var _user$project$Main$groupView = function (g) {
 		_elm_lang$html$Html$map,
 		_user$project$Main$UpdateGroup,
 		function () {
-			var _p11 = g;
-			if (_p11.ctor === 'Nothing') {
+			var _p12 = g;
+			if (_p12.ctor === 'Nothing') {
 				return _user$project$Component_Group$view(_user$project$Component_Group$model);
 			} else {
-				return _user$project$Component_Group$view(_p11._0);
+				return _user$project$Component_Group$view(_p12._0);
 			}
 		}());
 };
@@ -11993,8 +11957,8 @@ var _user$project$Main$view = function (m) {
 				_1: {
 					ctor: '::',
 					_0: function () {
-						var _p12 = m.view;
-						switch (_p12.ctor) {
+						var _p13 = m.view;
+						switch (_p13.ctor) {
 							case 'GroupView':
 								return A2(
 									_elm_lang$html$Html$div,
@@ -12005,8 +11969,8 @@ var _user$project$Main$view = function (m) {
 										_1: {
 											ctor: '::',
 											_0: function () {
-												var _p13 = _user$project$Main$groupSize(m.group);
-												if (_p13 === 0) {
+												var _p14 = _user$project$Main$groupSize(m.group);
+												if (_p14 === 0) {
 													return A2(
 														_elm_lang$html$Html$button,
 														{ctor: '[]'},
@@ -12085,10 +12049,10 @@ var _user$project$Main$main = _elm_lang$html$Html$program(
 		init: _user$project$Main$init,
 		view: _user$project$Main$view,
 		update: _user$project$Main$update,
-		subscriptions: function (_p14) {
+		subscriptions: function (_p15) {
 			return A2(
 				_elm_lang$core$Time$every,
-				5 * _elm_lang$core$Time$second,
+				_elm_lang$core$Time$second,
 				function (t) {
 					return _user$project$Main$Tick(t);
 				});
