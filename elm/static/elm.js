@@ -11391,7 +11391,17 @@ var _user$project$Component_GroupMember$startDate = A7(
 	0,
 	0,
 	0);
-var _user$project$Component_GroupMember$model = A4(_user$project$Generated_Types$GroupMember, '', '', _user$project$Component_GroupMember$startDate, _elm_lang$core$Maybe$Nothing);
+var _user$project$Component_GroupMember$Model = F2(
+	function (a, b) {
+		return {groupmember: a, jwtToken: b};
+	});
+var _user$project$Component_GroupMember$model = A2(
+	_user$project$Component_GroupMember$Model,
+	A4(_user$project$Generated_Types$GroupMember, '', '', _user$project$Component_GroupMember$startDate, _elm_lang$core$Maybe$Nothing),
+	'');
+var _user$project$Component_GroupMember$UpdateJwtToken = function (a) {
+	return {ctor: 'UpdateJwtToken', _0: a};
+};
 var _user$project$Component_GroupMember$SavedGroupMember = function (a) {
 	return {ctor: 'SavedGroupMember', _0: a};
 };
@@ -11436,15 +11446,18 @@ var _user$project$Component_GroupMember$saveGroupMember = F2(
 					withCredentials: false
 				}));
 	});
-var _user$project$Component_GroupMember$update = F2(
+var _user$project$Component_GroupMember$updateGroupMember = F2(
 	function (msg, model) {
+		var grpmember = model.groupmember;
 		var _p3 = msg;
 		switch (_p3.ctor) {
+			case 'UpdateJwtToken':
+				return {ctor: '_Tuple2', _0: grpmember, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'UpdateFirstname':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
-						model,
+						grpmember,
 						{firstname: _p3._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
@@ -11452,7 +11465,7 @@ var _user$project$Component_GroupMember$update = F2(
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
-						model,
+						grpmember,
 						{lastname: _p3._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
@@ -11462,35 +11475,57 @@ var _user$project$Component_GroupMember$update = F2(
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
-							model,
+							grpmember,
 							{dob: _p4._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				} else {
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+					return {ctor: '_Tuple2', _0: grpmember, _1: _elm_lang$core$Platform_Cmd$none};
 				}
 			case 'SaveGroupMember':
 				return {
 					ctor: '_Tuple2',
-					_0: model,
-					_1: A2(_user$project$Component_GroupMember$saveGroupMember, _p3._0, model)
+					_0: grpmember,
+					_1: A2(_user$project$Component_GroupMember$saveGroupMember, model.jwtToken, grpmember)
 				};
 			default:
 				switch (_p3._0.ctor) {
 					case 'NotAsked':
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+						return {ctor: '_Tuple2', _0: grpmember, _1: _elm_lang$core$Platform_Cmd$none};
 					case 'Loading':
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+						return {ctor: '_Tuple2', _0: grpmember, _1: _elm_lang$core$Platform_Cmd$none};
 					case 'Failure':
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+						return {ctor: '_Tuple2', _0: grpmember, _1: _elm_lang$core$Platform_Cmd$none};
 					default:
 						return {ctor: '_Tuple2', _0: _p3._0._0, _1: _elm_lang$core$Platform_Cmd$none};
 				}
 		}
 	});
-var _user$project$Component_GroupMember$SaveGroupMember = function (a) {
-	return {ctor: 'SaveGroupMember', _0: a};
-};
+var _user$project$Component_GroupMember$update = F2(
+	function (msg, model) {
+		var _p5 = msg;
+		if (_p5.ctor === 'UpdateJwtToken') {
+			return {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Native_Utils.update(
+					model,
+					{jwtToken: _p5._0}),
+				_1: _elm_lang$core$Platform_Cmd$none
+			};
+		} else {
+			var _p6 = A2(_user$project$Component_GroupMember$updateGroupMember, msg, model);
+			var grpmember = _p6._0;
+			var cmd = _p6._1;
+			return {
+				ctor: '_Tuple2',
+				_0: _elm_lang$core$Native_Utils.update(
+					model,
+					{groupmember: grpmember}),
+				_1: cmd
+			};
+		}
+	});
+var _user$project$Component_GroupMember$SaveGroupMember = {ctor: 'SaveGroupMember'};
 var _user$project$Component_GroupMember$UpdateDob = function (a) {
 	return {ctor: 'UpdateDob', _0: a};
 };
@@ -11568,17 +11603,19 @@ var _user$project$Component_GroupMember$main = _elm_lang$html$Html$program(
 		init: {ctor: '_Tuple2', _0: _user$project$Component_GroupMember$model, _1: _elm_lang$core$Platform_Cmd$none},
 		view: _user$project$Component_GroupMember$view,
 		update: _user$project$Component_GroupMember$update,
-		subscriptions: function (_p5) {
+		subscriptions: function (_p7) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
 	})();
 
-var _user$project$Component_Group$jwt = 'sfgsadgfsgsa';
-var _user$project$Component_Group$Group = F2(
-	function (a, b) {
-		return {name: a, members: b};
+var _user$project$Component_Group$Group = F3(
+	function (a, b, c) {
+		return {name: a, members: b, jwtToken: c};
 	});
-var _user$project$Component_Group$model = A2(_user$project$Component_Group$Group, '', _elm_lang$core$Dict$empty);
+var _user$project$Component_Group$model = A3(_user$project$Component_Group$Group, '', _elm_lang$core$Dict$empty, '');
+var _user$project$Component_Group$UpdateJwtToken = function (a) {
+	return {ctor: 'UpdateJwtToken', _0: a};
+};
 var _user$project$Component_Group$SaveGroup = {ctor: 'SaveGroup'};
 var _user$project$Component_Group$RemoveGroupMember = function (a) {
 	return {ctor: 'RemoveGroupMember', _0: a};
@@ -11624,6 +11661,29 @@ var _user$project$Component_Group$viewGroupMembers = function (d) {
 		{ctor: '[]'},
 		d);
 };
+var _user$project$Component_Group$passJwtTokenDown = F2(
+	function (jwt, grp) {
+		var members = grp.members;
+		return _elm_lang$core$Platform_Cmd$batch(
+			A2(
+				_elm_lang$core$List$map,
+				_elm_lang$core$Tuple$second,
+				_elm_lang$core$Dict$toList(
+					A2(
+						_elm_lang$core$Dict$map,
+						F2(
+							function (i, _p0) {
+								return A2(
+									_elm_lang$core$Platform_Cmd$map,
+									_user$project$Component_Group$UpdateGroupMember(i),
+									A2(
+										_elm_lang$core$Task$perform,
+										_elm_lang$core$Basics$identity,
+										_elm_lang$core$Task$succeed(
+											_user$project$Component_GroupMember$UpdateJwtToken(jwt))));
+							}),
+						members))));
+	});
 var _user$project$Component_Group$saveGroupG = function (g) {
 	return _elm_lang$core$Platform_Cmd$batch(
 		A2(
@@ -11637,21 +11697,30 @@ var _user$project$Component_Group$saveGroupG = function (g) {
 							return A2(
 								_elm_lang$core$Platform_Cmd$map,
 								_user$project$Component_Group$UpdateGroupMember(i),
-								A2(_user$project$Component_GroupMember$saveGroupMember, _user$project$Component_Group$jwt, m));
+								A2(_user$project$Component_GroupMember$saveGroupMember, m.jwtToken, m.groupmember));
 						}),
 					g))));
 };
 var _user$project$Component_Group$update = F2(
 	function (msg, model) {
 		var members = model.members;
-		var _p0 = msg;
-		switch (_p0.ctor) {
+		var _p1 = msg;
+		switch (_p1.ctor) {
+			case 'UpdateJwtToken':
+				var _p2 = _p1._0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{jwtToken: _p2}),
+					_1: A2(_user$project$Component_Group$passJwtTokenDown, _p2, model)
+				};
 			case 'UpdateGroupName':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{name: _p0._0}),
+						{name: _p1._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'AddGroupMember':
@@ -11668,7 +11737,10 @@ var _user$project$Component_Group$update = F2(
 							members: A3(
 								_elm_lang$core$Dict$insert,
 								k + 1,
-								A4(_user$project$Generated_Types$GroupMember, '', '', _user$project$Component_GroupMember$startDate, _elm_lang$core$Maybe$Nothing),
+								A2(
+									_user$project$Component_GroupMember$Model,
+									A4(_user$project$Generated_Types$GroupMember, '', '', _user$project$Component_GroupMember$startDate, _elm_lang$core$Maybe$Nothing),
+									model.jwtToken),
 								members)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
@@ -11679,20 +11751,20 @@ var _user$project$Component_Group$update = F2(
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							members: A2(_elm_lang$core$Dict$remove, _p0._0, members)
+							members: A2(_elm_lang$core$Dict$remove, _p1._0, members)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'UpdateGroupMember':
-				var _p2 = _p0._0;
+				var _p4 = _p1._0;
 				var r = A2(
 					_elm_lang$core$Maybe$map,
 					function (x) {
-						return A2(_user$project$Component_GroupMember$update, _p0._1, x);
+						return A2(_user$project$Component_GroupMember$update, _p1._1, x);
 					},
-					A2(_elm_lang$core$Dict$get, _p2, members));
-				var _p1 = r;
-				if (_p1.ctor === 'Nothing') {
+					A2(_elm_lang$core$Dict$get, _p4, members));
+				var _p3 = r;
+				if (_p3.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
 					return {
@@ -11702,8 +11774,8 @@ var _user$project$Component_Group$update = F2(
 							{
 								members: A3(
 									_elm_lang$core$Dict$insert,
-									_p2,
-									_elm_lang$core$Tuple$first(_p1._0),
+									_p4,
+									_elm_lang$core$Tuple$first(_p3._0),
 									members)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
@@ -12613,6 +12685,16 @@ var _user$project$Main$projectView = function (p) {
 var _user$project$Main$UpdateGroup = function (a) {
 	return {ctor: 'UpdateGroup', _0: a};
 };
+var _user$project$Main$passJwtTokenDown = function (logindetails) {
+	return A2(
+		_elm_lang$core$Platform_Cmd$map,
+		_user$project$Main$UpdateGroup,
+		A2(
+			_elm_lang$core$Task$perform,
+			_elm_lang$core$Basics$identity,
+			_elm_lang$core$Task$succeed(
+				_user$project$Component_Group$UpdateJwtToken(logindetails.jwtToken))));
+};
 var _user$project$Main$update = F2(
 	function (msg, model) {
 		var _p3 = msg;
@@ -12728,7 +12810,11 @@ var _user$project$Main$update = F2(
 													_user$project$Component_Login$Message(_p7));
 											},
 											A3(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Logged in', 3)),
-										_1: {ctor: '[]'}
+										_1: {
+											ctor: '::',
+											_0: _user$project$Main$passJwtTokenDown(_p8),
+											_1: {ctor: '[]'}
+										}
 									}
 								})
 						};

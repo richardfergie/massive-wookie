@@ -58,7 +58,7 @@ createAdmin = do
     Nothing -> Crud.createUser adminUser >> return ()
     Just _ -> return ()
 
-corsPolicy = const $ Just simpleCorsResourcePolicy{corsRequestHeaders = simpleResponseHeaders ++ ["Content-Type", "authorization"]}
+corsPolicy = const $ Just simpleCorsResourcePolicy{corsRequestHeaders = simpleResponseHeaders ++ ["Content-Type", "authorization"], corsMethods = "PUT" : "DELETE" : simpleMethods}
 
 startApp :: IO ()
 startApp = bracket (openLocalStateFrom "/tmp/acid" Acid.emptyWorld >>= \acid -> return $ AppConfig acid (parseJwk "secret"))

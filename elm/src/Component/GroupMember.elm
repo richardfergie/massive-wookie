@@ -12,13 +12,19 @@ import Helpers.Types as Types
 import Http
 import RemoteData
 
+type alias Model = {
+        groupmember : GroupMember,
+        jwtToken : String
+    }
+
 type Msg = UpdateFirstname String
          | UpdateLastname String
          | UpdateDob String
-         | SaveGroupMember String
+         | SaveGroupMember
          | SavedGroupMember (RemoteData.WebData GroupMember)
+         | UpdateJwtToken String
 
-view : GroupMember -> Html Msg
+view : Model -> Html Msg
 view model = div [] [
               input [placeholder "First name", onInput UpdateFirstname] [],
               input [placeholder "Last name", onInput UpdateLastname] [],
@@ -26,18 +32,26 @@ view model = div [] [
               node "input" [type_ "date", onInput UpdateDob] []
              ]
 
-update : Msg -> GroupMember -> (GroupMember, Cmd Msg)
-update msg model =
-    case msg of
-      UpdateFirstname x -> ({model | firstname = x}, Cmd.none)
-      UpdateLastname x -> ({model | lastname = x}, Cmd.none)
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model = case msg of
+  UpdateJwtToken t -> ({model | jwtToken = t}, Cmd.none)
+  _ -> let (grpmember,cmd) = updateGroupMember msg model
+       in ({model | groupmember = grpmember}, cmd)
+
+updateGroupMember : Msg -> Model -> (GroupMember, Cmd Msg)
+updateGroupMember msg model =
+    let grpmember = model.groupmember
+    in case msg of
+      UpdateJwtToken _ -> (grpmember, Cmd.none)
+      UpdateFirstname x -> ({grpmember | firstname = x}, Cmd.none)
+      UpdateLastname x -> ({grpmember | lastname = x}, Cmd.none)
       UpdateDob x -> case fromString x of
-        Ok d -> ({model | dob = d}, Cmd.none)
-        Err e -> (model, Cmd.none)
-      SaveGroupMember jwt -> (model, saveGroupMember jwt model)
-      SavedGroupMember RemoteData.NotAsked -> (model, Cmd.none)
-      SavedGroupMember RemoteData.Loading -> (model, Cmd.none)
-      SavedGroupMember (RemoteData.Failure _) -> (model, Cmd.none)
+        Ok d -> ({grpmember | dob = d}, Cmd.none)
+        Err e -> (grpmember, Cmd.none)
+      SaveGroupMember -> (grpmember, saveGroupMember model.jwtToken grpmember)
+      SavedGroupMember RemoteData.NotAsked -> (grpmember, Cmd.none)
+      SavedGroupMember RemoteData.Loading -> (grpmember, Cmd.none)
+      SavedGroupMember (RemoteData.Failure _) -> (grpmember, Cmd.none)
       SavedGroupMember (RemoteData.Success g) -> (g, Cmd.none)
 
 saveGroupMember jwt g = let (method, url) = case g.id of
@@ -57,7 +71,7 @@ saveGroupMember jwt g = let (method, url) = case g.id of
 
 startDate = dateFromFields 2000 (intToMonth 1) 1 0 0 0 0
 
-model = GroupMember "" "" startDate Nothing
+model = Model (GroupMember "" "" startDate Nothing) ""
 
 main = Html.program {
            init = (model,Cmd.none),

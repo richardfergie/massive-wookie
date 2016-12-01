@@ -11,6 +11,7 @@ import Helpers.Types as Types
 import Maybe
 import Dict
 import Time
+import Task
 
 type View = GroupView
           | ProjectView
@@ -61,7 +62,8 @@ update msg model = case msg of
                                             overviewmodel = model.overview
                                             newoverview = {overviewmodel | jwtToken = Just u.jwtToken}
                                   in ({model | user = Just u, view=OverviewView, login=newlogin, overview=newoverview}, Cmd.batch [Cmd.map UpdateOverview <| Overview.getOverviewData newoverview,
-                          Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged in" 3]
+                          Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged in" 3,
+                                                                                                                                  passJwtTokenDown u]
                                           )
   UpdateLogin l -> let (newlogin,msg) = Login.update l model.login
                    in ({model | login=newlogin}, Cmd.map UpdateLogin msg)
@@ -91,6 +93,9 @@ view m = div [] [
       LoginView -> Html.map UpdateLogin <| Login.view m.login
       OverviewView -> Html.map UpdateOverview <| Overview.view m.overview
      ]
+
+passJwtTokenDown : Login.LoginDetails -> Cmd Msg
+passJwtTokenDown logindetails = Cmd.map UpdateGroup <| Task.perform identity <| Task.succeed <| Group.UpdateJwtToken logindetails.jwtToken
 
 viewMessages : Model -> Html Msg
 viewMessages model = div [] <| List.map (\x -> div [] [text x.messageBody]) model.messages
