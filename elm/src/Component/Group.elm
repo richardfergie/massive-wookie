@@ -16,15 +16,11 @@ type alias Group =
         members : Dict.Dict Int GroupMember
     }
 
-type GroupTest = ExistingGroup {
-        groupId : Int,
-        group : Group
-    } | NewGroup { group : Group}
-
 type Msg = UpdateGroupName String
          | UpdateGroupMember Int GroupMember.Msg
          | AddGroupMember
          | RemoveGroupMember Int
+         | SaveGroup
 
 viewGroupMembers : Dict.Dict Int GroupMember -> List (Html Msg)
 viewGroupMembers d = Dict.foldl (\k v acc -> acc ++ [Html.map (UpdateGroupMember k) (GroupMember.view v), button [onClick <| RemoveGroupMember k] [text "Remove"]]) [] d
@@ -37,21 +33,27 @@ view model = div [] <| [input [placeholder "Group name", onInput UpdateGroupName
                              ],
                         div [] (viewGroupMembers (model.members)),
                         div [] [
-                             button [onClick AddGroupMember] [text "Add group member"]
+                             button [onClick AddGroupMember] [text "Add group member"],
+                             button [onClick SaveGroup] [text "Save Group"]
                             ]
                        ]
 
-update : Msg -> Group -> Group
+update : Msg -> Group -> (Group, Cmd Msg)
 update msg model =
   let members = model.members
   in case msg of
-    UpdateGroupName n -> {model | name = n}
+    UpdateGroupName n -> ({model | name = n}, Cmd.none)
     AddGroupMember -> let k = Maybe.withDefault 1 <| List.maximum <| Dict.keys members
-                      in {model | members = Dict.insert (k+1) (GroupMember "" "" GroupMember.startDate) members}
-    RemoveGroupMember k -> { model | members = Dict.remove k members}
+                      in ({model | members = Dict.insert (k+1) (GroupMember "" "" GroupMember.startDate Nothing) members}, Cmd.none)
+    RemoveGroupMember k -> ({ model | members = Dict.remove k members}, Cmd.none)
     UpdateGroupMember k m -> let r = Maybe.map (\x -> GroupMember.update m x) (Dict.get k members)
       in case r of
-        Nothing -> model
-        Just res -> {model | members = Dict.insert k res members}
+        Nothing -> (model, Cmd.none)
+        Just res -> ({model | members = Dict.insert k (Tuple.first res) members}, Cmd.none)
+    SaveGroup -> (model, saveGroupG members)
+
+jwt = "sfgsadgfsgsa"
+
+saveGroupG g = Cmd.batch <| List.map Tuple.second <| Dict.toList <| Dict.map (\i m -> Cmd.map (UpdateGroupMember i) <| GroupMember.saveGroupMember jwt m) g
 
 model = Group "" Dict.empty

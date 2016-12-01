@@ -76,6 +76,7 @@ decodeProject =
         |> required "group" int
         |> required "project" (nullable int)
         |> required "status" decodeProjectStatus
+        |> optional "id" (maybe int) Nothing
 
 type alias UserCreds = {
         userCredsId : Int,

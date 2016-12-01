@@ -50,8 +50,8 @@ update msg model = case msg of
                 newmessages = List.filter (\x -> x.messageExpires > t) oldmessages
             in ({model | messages = newmessages}, Cmd.none)
   Logout -> ({model | user = Nothing, view=LoginView}, Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged out" 3)
-  UpdateGroup g -> let newgroup = Group.update g <| Maybe.withDefault Group.model model.group
-                   in ({model | group = Just newgroup}, Cmd.none)
+  UpdateGroup g -> let (newgroup, cmd) = Group.update g <| Maybe.withDefault Group.model model.group
+                   in ({model | group = Just newgroup}, Cmd.map UpdateGroup cmd)
   UpdateProject p -> let newproject = Project.update p <| Maybe.withDefault Project.model model.project
                      in ({model | project = Just newproject},Cmd.none)
   UpdateLogin (Login.Message m) -> let oldmessages = model.messages
