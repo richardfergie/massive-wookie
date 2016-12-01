@@ -6,6 +6,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Types where
 
 import Control.Lens
@@ -17,16 +18,24 @@ import Data.Text (Text)
 import Data.Time (Day)
 import Data.Aeson
 import Data.ByteString (ByteString)
+import qualified Data.HashMap.Strict as HashMap
 
 data Entity a = Entity { entityKey :: Int,
                          entityVal :: a
-                       } deriving (Generic, Show, ToJSON, FromJSON)
+                       } deriving (Generic, Show)
 
 instance Eq (Entity a) where
   (==) x y = (==) (entityKey x) (entityKey y)
 
 instance Ord (Entity a) where
   compare x y = compare (entityKey x) (entityKey y)
+
+instance ToJSON a => ToJSON (Entity a) where
+  toJSON (Entity k v) = Object $ HashMap.insert "id" (toJSON k) obj
+    where Object obj = toJSON v
+
+instance FromJSON a => FromJSON (Entity a) where
+  parseJSON (Object v) = Entity <$> v .: "id" <*> parseJSON (Object v)
 
 type FacilitatorId = Int
 type GroupId = Int
