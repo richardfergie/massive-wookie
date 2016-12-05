@@ -25,7 +25,7 @@ type Msg = UpdateGroupName String
          | SaveGroup
          | UpdateJwtToken String
 
-viewGroupMembers : Dict.Dict Int GroupMember.Model -> List (Html Msg)
+viewGroupMembers : Dict.Dict Int GroupMember -> List (Html Msg)
 viewGroupMembers d = Dict.foldl (\k v acc -> acc ++ [Html.map (UpdateGroupMember k) (GroupMember.view v), button [onClick <| RemoveGroupMember k] [text "Remove"]]) [] d
 
 view : Group -> Html Msg
@@ -41,30 +41,19 @@ view model = div [] <| [input [placeholder "Group name", onInput UpdateGroupName
                             ]
                        ]
 
-passJwtTokenDown : String -> Group -> Cmd Msg
-passJwtTokenDown jwt grp = let members = grp.members
-                           in Cmd.batch <|
-                               List.map Tuple.second <|
-                                   Dict.toList <|
-                                       Dict.map (\i _ -> Cmd.map (UpdateGroupMember i) <|
-                                                     Task.perform identity <|
-                                                     Task.succeed <| GroupMember.UpdateJwtToken jwt) members
-
 update : Msg -> Group -> (Group, Cmd Msg)
 update msg model =
   let members = model.members
   in case msg of
-    UpdateJwtToken s -> ({model | jwtToken = s}, passJwtTokenDown s model)
+    UpdateJwtToken s -> ({model | jwtToken = s}, Cmd.none)
     UpdateGroupName n -> ({model | name = n}, Cmd.none)
     AddGroupMember -> let k = Maybe.withDefault 1 <| List.maximum <| Dict.keys members
-                      in ({model | members = Dict.insert (k+1) (GroupMember.Model (GroupMember "" "" GroupMember.startDate Nothing) model.jwtToken) members}, Cmd.none)
+                      in ({model | members = Dict.insert (k+1) (GroupMember "" "" GroupMember.startDate Nothing) members}, Cmd.none)
     RemoveGroupMember k -> ({ model | members = Dict.remove k members}, Cmd.none)
-    UpdateGroupMember k m -> let r = Maybe.map (\x -> GroupMember.update m x) (Dict.get k members)
+    UpdateGroupMember k m -> let r = Maybe.map (\x -> GroupMember.update model.jwtToken m x) (Dict.get k members)
       in case r of
         Nothing -> (model, Cmd.none)
         Just res -> ({model | members = Dict.insert k (Tuple.first res) members}, Cmd.none)
-    SaveGroup -> (model, saveGroupG members)
-
-saveGroupG g = Cmd.batch <| List.map Tuple.second <| Dict.toList <| Dict.map (\i m -> Cmd.map (UpdateGroupMember i) <| GroupMember.saveGroupMember m.jwtToken m.groupmember) g
+    SaveGroup -> (model, Cmd.none)
 
 model = Group "" Dict.empty ""
