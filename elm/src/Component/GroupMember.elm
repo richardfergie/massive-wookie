@@ -47,7 +47,7 @@ updateGroupMember jwt msg model =
 
 saveGroupMember jwt g = let (method, url) = case g.id of
                            Nothing -> ("POST", "http://localhost:8080/groupmember/create")
-                           Just i -> ("PUT", "http://localhost:8080/groupmember/create" ++ toString i)
+                           Just i -> ("PUT", "http://localhost:8080/groupmember/" ++ toString i)
                     in Http.request {
                             method = method,
                             url = url,
