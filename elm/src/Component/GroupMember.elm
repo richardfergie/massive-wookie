@@ -17,8 +17,8 @@ type alias Model = GroupMember
 type Msg = UpdateFirstname String
          | UpdateLastname String
          | UpdateDob String
-         | SaveGroupMember
-         | SavedGroupMember (RemoteData.WebData GroupMember)
+  --       | SaveGroupMember
+  --       | SavedGroupMember (RemoteData.WebData GroupMember)
 
 view : GroupMember -> Html Msg
 view model = div [] [
@@ -39,26 +39,6 @@ updateGroupMember jwt msg model =
       UpdateDob x -> case fromString x of
         Ok d -> ({model | dob = d}, Cmd.none)
         Err e -> (model, Cmd.none)
-      SaveGroupMember -> (model, saveGroupMember jwt model)
-      SavedGroupMember RemoteData.NotAsked -> (model, Cmd.none)
-      SavedGroupMember RemoteData.Loading -> (model, Cmd.none)
-      SavedGroupMember (RemoteData.Failure _) -> (model, Cmd.none)
-      SavedGroupMember (RemoteData.Success g) -> (g, Cmd.none)
-
-saveGroupMember jwt g = let (method, url) = case g.id of
-                           Nothing -> ("POST", "http://localhost:8080/groupmember/create")
-                           Just i -> ("PUT", "http://localhost:8080/groupmember/" ++ toString i)
-                    in Http.request {
-                            method = method,
-                            url = url,
-                            body = Http.jsonBody <| encodeGroupMember g,
-                            expect = Http.expectJson decodeGroupMember,
-                            headers = [
-                                 Http.header "authorization" jwt
-                                ],
-                            timeout = Nothing,
-                            withCredentials = False
-                        } |> Http.send (SavedGroupMember << RemoteData.fromResult)
 
 startDate = dateFromFields 2000 (intToMonth 1) 1 0 0 0 0
 
