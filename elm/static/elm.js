@@ -11392,60 +11392,16 @@ var _user$project$Component_GroupMember$startDate = A7(
 	0,
 	0);
 var _user$project$Component_GroupMember$model = A4(_user$project$Generated_Types$GroupMember, '', '', _user$project$Component_GroupMember$startDate, _elm_lang$core$Maybe$Nothing);
-var _user$project$Component_GroupMember$SavedGroupMember = function (a) {
-	return {ctor: 'SavedGroupMember', _0: a};
-};
-var _user$project$Component_GroupMember$saveGroupMember = F2(
-	function (jwt, g) {
-		var _p0 = function () {
-			var _p1 = g.id;
-			if (_p1.ctor === 'Nothing') {
-				return {ctor: '_Tuple2', _0: 'POST', _1: 'http://localhost:8080/groupmember/create'};
-			} else {
-				return {
-					ctor: '_Tuple2',
-					_0: 'PUT',
-					_1: A2(
-						_elm_lang$core$Basics_ops['++'],
-						'http://localhost:8080/groupmember/',
-						_elm_lang$core$Basics$toString(_p1._0))
-				};
-			}
-		}();
-		var method = _p0._0;
-		var url = _p0._1;
-		return A2(
-			_elm_lang$http$Http$send,
-			function (_p2) {
-				return _user$project$Component_GroupMember$SavedGroupMember(
-					_krisajenkins$remotedata$RemoteData$fromResult(_p2));
-			},
-			_elm_lang$http$Http$request(
-				{
-					method: method,
-					url: url,
-					body: _elm_lang$http$Http$jsonBody(
-						_user$project$Generated_Types$encodeGroupMember(g)),
-					expect: _elm_lang$http$Http$expectJson(_user$project$Generated_Types$decodeGroupMember),
-					headers: {
-						ctor: '::',
-						_0: A2(_elm_lang$http$Http$header, 'authorization', jwt),
-						_1: {ctor: '[]'}
-					},
-					timeout: _elm_lang$core$Maybe$Nothing,
-					withCredentials: false
-				}));
-	});
 var _user$project$Component_GroupMember$updateGroupMember = F3(
 	function (jwt, msg, model) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
+		var _p0 = msg;
+		switch (_p0.ctor) {
 			case 'UpdateFirstname':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{firstname: _p3._0}),
+						{firstname: _p0._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'UpdateLastname':
@@ -11453,38 +11409,21 @@ var _user$project$Component_GroupMember$updateGroupMember = F3(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{lastname: _p3._0}),
+						{lastname: _p0._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			case 'UpdateDob':
-				var _p4 = _elm_lang$core$Date$fromString(_p3._0);
-				if (_p4.ctor === 'Ok') {
+			default:
+				var _p1 = _elm_lang$core$Date$fromString(_p0._0);
+				if (_p1.ctor === 'Ok') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{dob: _p4._0}),
+							{dob: _p1._0}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-			case 'SaveGroupMember':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: A2(_user$project$Component_GroupMember$saveGroupMember, jwt, model)
-				};
-			default:
-				switch (_p3._0.ctor) {
-					case 'NotAsked':
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-					case 'Loading':
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-					case 'Failure':
-						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-					default:
-						return {ctor: '_Tuple2', _0: _p3._0._0, _1: _elm_lang$core$Platform_Cmd$none};
 				}
 		}
 	});
@@ -11492,7 +11431,6 @@ var _user$project$Component_GroupMember$update = F3(
 	function (jwt, msg, model) {
 		return A3(_user$project$Component_GroupMember$updateGroupMember, jwt, msg, model);
 	});
-var _user$project$Component_GroupMember$SaveGroupMember = {ctor: 'SaveGroupMember'};
 var _user$project$Component_GroupMember$UpdateDob = function (a) {
 	return {ctor: 'UpdateDob', _0: a};
 };
@@ -11702,26 +11640,23 @@ var _user$project$Component_Group$fromWireGroup = F2(
 	});
 var _user$project$Component_Group$saveGroupTask = F2(
 	function (jwt, grp) {
-		var dict = A4(_elm_lang$core$Debug$log, 'Should happen once', _user$project$Component_Group$saveGroupMembers, jwt, grp);
-		var grouptask = A2(
+		return A2(
 			_elm_lang$core$Task$andThen,
-			function (x) {
-				return A2(
-					_user$project$Component_Group$saveGroupHttp,
-					jwt,
-					_elm_lang$core$Native_Utils.update(
-						grp,
-						{members: x}));
+			function (memberdict) {
+				return function (wiregroup) {
+					return A2(
+						_elm_lang$core$Task$map,
+						_user$project$Component_Group$fromWireGroup(memberdict),
+						wiregroup);
+				}(
+					A2(
+						_user$project$Component_Group$saveGroupHttp,
+						jwt,
+						_elm_lang$core$Native_Utils.update(
+							grp,
+							{members: memberdict})));
 			},
-			dict);
-		return A3(
-			_elm_lang$core$Task$map2,
-			F2(
-				function (d, grp) {
-					return A2(_user$project$Component_Group$fromWireGroup, d, grp);
-				}),
-			dict,
-			grouptask);
+			A2(_user$project$Component_Group$saveGroupMembers, jwt, grp));
 	});
 var _user$project$Component_Group$SetGroup = function (a) {
 	return {ctor: 'SetGroup', _0: a};

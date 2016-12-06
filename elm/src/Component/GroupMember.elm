@@ -17,8 +17,6 @@ type alias Model = GroupMember
 type Msg = UpdateFirstname String
          | UpdateLastname String
          | UpdateDob String
-  --       | SaveGroupMember
-  --       | SavedGroupMember (RemoteData.WebData GroupMember)
 
 view : GroupMember -> Html Msg
 view model = div [] [
