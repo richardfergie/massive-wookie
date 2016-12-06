@@ -107,9 +107,10 @@ toWireGroup g = Types.Group g.organisation (List.filterMap identity <| List.map 
 saveGroupMembers jwt grp = Task.map Dict.fromList <| Task.map addNumbers <| Task.sequence <| List.map Tuple.second <| Dict.toList <| Dict.map (\_ x -> saveGroupMemberHttp jwt x) grp.members
 
 saveGroupTask : String -> Group -> Task.Task Http.Error Group
-saveGroupTask jwt grp = let dict = saveGroupMembers jwt grp
-                            grouptask = Task.andThen (\x -> saveGroupHttp jwt {grp | members = x}) dict
-                        in Task.map2 (\d grp -> fromWireGroup d grp) dict grouptask
+saveGroupTask jwt grp = saveGroupMembers jwt grp
+                      |> Task.andThen (\memberdict -> saveGroupHttp jwt {grp | members = memberdict}
+                                        |> \wiregroup -> Task.map (fromWireGroup memberdict) wiregroup)
+
 
 addNumbers xs = let m = List.length xs
                     rng = List.range 1 m
