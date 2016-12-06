@@ -58,11 +58,16 @@ createAdmin = do
     Nothing -> Crud.createUser adminUser >> return ()
     Just _ -> return ()
 
+createTestData = do
+  createAdmin
+  Crud.setOrganisation 0 $ Types.Organisation "Test Organisation"
+  Crud.setFacilitator 0 $ Types.Facilitator "Test Facilitator" 0 [0]
+
 corsPolicy = const $ Just simpleCorsResourcePolicy{corsRequestHeaders = simpleResponseHeaders ++ ["Content-Type", "authorization"], corsMethods = "PUT" : "DELETE" : simpleMethods}
 
 startApp :: IO ()
 startApp = bracket (openLocalStateFrom "/tmp/acid" Acid.emptyWorld >>= \acid -> return $ AppConfig acid (parseJwk "secret"))
                    (\appconf -> closeAcidState $ Foundation.state appconf)
                    (\appconf -> do
-                       runExceptT $ runResourceT $ runReaderT (runAppServer $ runDB createAdmin) (RequestInfo appconf undefined undefined)
+                       runExceptT $ runResourceT $ runReaderT (runAppServer $ runDB createTestData) (RequestInfo appconf undefined undefined)
                        run 8080 (logStdoutDev $ cors corsPolicy $ app appconf))

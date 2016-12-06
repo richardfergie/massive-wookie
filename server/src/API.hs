@@ -36,11 +36,19 @@ crudder creator deleter setter getter = (\ i -> requireUser >> (runDB $ creator 
                        Just r -> return r
                   )
 
+groupsByUserId uid = do
+  mfac <- Crud.getFacilitatorByUserId uid
+  case mfac of
+    Nothing -> return []
+    Just (Types.Entity facid (Types.Facilitator _ _ orgids)) ->
+      fmap concat $ mapM Crud.getGroupsByOrganisationId orgids
+
 crudGroup :: ServerT (CRUD Types.Group) (AppServer)
-crudGroup = return [] :<|> (crudder Crud.createGroup
-                                    Crud.deleteGroup
-                                    Crud.setGroup
-                                    Crud.getGroup)
+crudGroup = (requireUser >>= runDB . groupsByUserId . _userCredsId)
+            :<|> (crudder Crud.createGroup
+                          Crud.deleteGroup
+                          Crud.setGroup
+                          Crud.getGroup)
 
 crudGroupMember :: ServerT (CRUD Types.GroupMember) (AppServer)
 crudGroupMember = return [] :<|> (crudder Crud.createGroupMember
@@ -51,7 +59,7 @@ crudGroupMember = return [] :<|> (crudder Crud.createGroupMember
 projectsByUserId uid = do
   mfac <- Crud.getFacilitatorByUserId uid
   case mfac of
-    Nothing -> return [] --maybe throw error?
+    Nothing -> return [] --maybe throw error because they are not a facilitator?
     Just (Types.Entity facid _) -> Crud.getProjectsByFacilitatorId facid
 
 crudProject :: ServerT (CRUD Types.Project) (AppServer)

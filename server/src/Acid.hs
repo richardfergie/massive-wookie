@@ -99,10 +99,11 @@ type GroupMemberIxs = '[Types.GroupMemberId]
 instance Indexable GroupMemberIxs (Entity GroupMember) where
   indices = ixList (ixFun $ \x -> [Types.entityKey x])
 
-type GroupIxs = '[Types.GroupId]
+type GroupIxs = '[Types.GroupId, Types.OrganisationId]
 
 instance Indexable GroupIxs (Entity Types.Group) where
   indices = ixList (ixFun $ \x -> [Types.entityKey x])
+                   (ixFun $ \x -> [Types.organisation $ Types.entityVal x])
 
 type OrganisationIxs = '[Types.OrganisationId]
 
@@ -197,6 +198,11 @@ updateGroup k v = do
     then fmap Right $ updateWorld worldGroups k v
     else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
 
+getGroupsByOrganisationId :: Types.OrganisationId
+  -> Query World [Types.Entity Types.Group]
+getGroupsByOrganisationId oid = do
+  Table _ groups <- fmap _worldGroups ask
+  return $ toList $ getEQ oid groups
 --
 -- Organisation queries
 --
@@ -307,6 +313,7 @@ $(makeAcidic ''World ['insertGroup,
                       'deleteGroupMember,
                       'updateGroupMember,
                       'getGroupMember,
+                      'getGroupsByOrganisationId,
                       'insertFacilitator,
                       'deleteFacilitator,
                       'updateFacilitator,
@@ -341,6 +348,7 @@ acidStateCrud acid p = do
   Crud.DeleteGroup x :>>= ps -> update' acid (DeleteGroup x) >>= acidStateCrud acid . ps
   Crud.SetGroup k v :>>= ps -> update' acid (UpdateGroup k v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
   Crud.CreateGroup v :>>= ps -> update' acid (InsertGroup v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
+  Crud.GetGroupsByOrganisationId oid :>>= ps -> query' acid (GetGroupsByOrganisationId oid) >>= acidStateCrud acid . ps
 
   Crud.GetGroupMember x :>>= ps -> query' acid (GetGroupMember x) >>= acidStateCrud acid . ps
   Crud.DeleteGroupMember x :>>= ps -> update' acid (DeleteGroupMember x) >>= acidStateCrud acid . ps
