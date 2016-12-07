@@ -14,7 +14,7 @@ import Dict
 
 type alias Model = {
         projects : WebData (List (Entity Project)),
-        groups : WebData (List (Entity Group)),
+        groups : WebData (List (Group)),
         jwtToken : Maybe String
     }
 
@@ -40,7 +40,7 @@ getGroups model = Http.request {
                         method = "GET",
                         url = "http://localhost:8080/group",
                         body = Http.emptyBody,
-                        expect = Http.expectJson (Decode.list (decodeEntity decodeGroup)),
+                        expect = Http.expectJson (Decode.list decodeGroup),
                         headers = [
                              Http.header "Content-Type" "application/json",
                              Http.header "authorization" (Maybe.withDefault "" model.jwtToken)
@@ -52,7 +52,7 @@ getGroups model = Http.request {
 init = (Model NotAsked NotAsked Nothing, Cmd.none)
 
 type Msg = ProjectResponse (WebData (List (Entity Project)))
-         | GroupResponse (WebData (List (Entity Group)))
+         | GroupResponse (WebData (List Group))
          | AddGroup
          | AddProject
 
@@ -67,8 +67,12 @@ view : Model -> Html Msg
 view model = case model.jwtToken of
   Nothing -> div [] [text "You need to be logged in to view this"]
   Just _ -> div [] [
-             viewGroups model,
-             viewProjects model
+             div [] [h2 [] [text "Groups"],
+                     viewGroups model
+                    ],
+             div [] [h2 [] [text "Projects"],
+                     viewProjects model
+                    ]
             ]
 
 projectButton = div [] [
@@ -100,9 +104,13 @@ viewGroups model = case model.groups of
     [] -> div [] [text "You have no groups",
                   groupButton
                  ]
-    gps -> div [] [text "You have some groups",
-                   groupButton
-                  ]
+    gps -> div [] <| (List.map viewGroup gps)
+                   ++ [groupButton]
+
+viewGroup : Group -> Html Msg
+viewGroup grp = div [] [
+                 div [] [text grp.groupName]
+                ]
 
 main = Html.program {
            init = init,

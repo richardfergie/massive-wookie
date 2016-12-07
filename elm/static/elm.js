@@ -12105,6 +12105,23 @@ var _user$project$Component_Login$main = _elm_lang$html$Html$program(
 		}
 	})();
 
+var _user$project$Component_Overview$viewGroup = function (grp) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(grp.groupName),
+					_1: {ctor: '[]'}
+				}),
+			_1: {ctor: '[]'}
+		});
+};
 var _user$project$Component_Overview$update = F2(
 	function (msg, model) {
 		var _p0 = msg;
@@ -12290,15 +12307,14 @@ var _user$project$Component_Overview$viewGroups = function (model) {
 				return A2(
 					_elm_lang$html$Html$div,
 					{ctor: '[]'},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text('You have some groups'),
-						_1: {
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						A2(_elm_lang$core$List$map, _user$project$Component_Overview$viewGroup, _p4),
+						{
 							ctor: '::',
 							_0: _user$project$Component_Overview$groupButton,
 							_1: {ctor: '[]'}
-						}
-					});
+						}));
 			}
 	}
 };
@@ -12319,10 +12335,46 @@ var _user$project$Component_Overview$view = function (model) {
 			{ctor: '[]'},
 			{
 				ctor: '::',
-				_0: _user$project$Component_Overview$viewGroups(model),
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$h2,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('Groups'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {
+							ctor: '::',
+							_0: _user$project$Component_Overview$viewGroups(model),
+							_1: {ctor: '[]'}
+						}
+					}),
 				_1: {
 					ctor: '::',
-					_0: _user$project$Component_Overview$viewProjects(model),
+					_0: A2(
+						_elm_lang$html$Html$div,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$h2,
+								{ctor: '[]'},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('Projects'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {
+								ctor: '::',
+								_0: _user$project$Component_Overview$viewProjects(model),
+								_1: {ctor: '[]'}
+							}
+						}),
 					_1: {ctor: '[]'}
 				}
 			});
@@ -12353,8 +12405,7 @@ var _user$project$Component_Overview$getGroups = function (model) {
 				url: 'http://localhost:8080/group',
 				body: _elm_lang$http$Http$emptyBody,
 				expect: _elm_lang$http$Http$expectJson(
-					_elm_lang$core$Json_Decode$list(
-						_user$project$Helpers_Types$decodeEntity(_user$project$Generated_Types$decodeGroup))),
+					_elm_lang$core$Json_Decode$list(_user$project$Generated_Types$decodeGroup)),
 				headers: {
 					ctor: '::',
 					_0: A2(_elm_lang$http$Http$header, 'Content-Type', 'application/json'),
