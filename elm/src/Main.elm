@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -8,10 +8,14 @@ import Component.Project as Project
 import Component.Login as Login
 import Component.Overview as Overview
 import Helpers.Types as Types
+import Generated.Types as Types
 import Maybe
 import Dict
 import Time
 import Task
+import RemoteData
+import Http
+import Json.Decode as Decode
 
 type View = GroupView
           | ProjectView
@@ -26,10 +30,11 @@ type alias Model =
         overview : Overview.Model,
         view : View,
         user : Maybe Login.LoginDetails,
+        facilitatorOrganisations : Maybe (Dict.Dict Int Types.Organisation),
         messages : List Types.Message
     }
 
-model = Model Nothing Nothing (Login.Model "" "") (Tuple.first Overview.init) LoginView Nothing []
+model = Model Nothing Nothing (Login.Model "" "") (Tuple.first Overview.init) LoginView Nothing Nothing []
 
 init = (model, Cmd.none)
 
@@ -41,6 +46,7 @@ type Msg = UpdateGroup Group.Msg
          | UpdateProject Project.Msg
          | UpdateLogin Login.Msg
          | UpdateOverview Overview.Msg
+         | UpdateOrganisations (Maybe (Dict.Dict Int Types.Organisation))
          | ChangeView View
          | Logout
          | Tick Time.Time
@@ -52,7 +58,7 @@ update msg model = case msg of
             in ({model | messages = newmessages}, Cmd.none)
   Logout -> ({model | user = Nothing, view=LoginView}, Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged out" 3)
   UpdateGroup g -> let jwt = Maybe.withDefault "" <| Maybe.map .jwtToken model.user
-                       (newgroup, cmd) = Group.update jwt g <| Maybe.withDefault Group.model model.group
+                       (newgroup, cmd) = Group.update jwt model.facilitatorOrganisations g <| Maybe.withDefault Group.model model.group
                    in ({model | group = Just newgroup}, Cmd.map UpdateGroup cmd)
   UpdateProject p -> let newproject = Project.update p <| Maybe.withDefault Project.model model.project
                      in ({model | project = Just newproject},Cmd.none)
@@ -63,7 +69,8 @@ update msg model = case msg of
                                             overviewmodel = model.overview
                                             newoverview = {overviewmodel | jwtToken = Just u.jwtToken}
                                   in ({model | user = Just u, view=OverviewView, login=newlogin, overview=newoverview}, Cmd.batch [Cmd.map UpdateOverview <| Overview.getOverviewData newoverview,
-                          Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged in" 3]
+                          Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged in" 3,
+                                             getFacilitatorOrganisations u.jwtToken]
                                           )
   UpdateLogin l -> let (newlogin,msg) = Login.update l model.login
                    in ({model | login=newlogin}, Cmd.map UpdateLogin msg)
@@ -71,6 +78,8 @@ update msg model = case msg of
   UpdateOverview Overview.AddProject -> ({model | view=ProjectView}, Cmd.none)
   UpdateOverview o -> let (newoverview,cmd) = Overview.update o model.overview
                       in ({model | overview = newoverview}, Cmd.map UpdateOverview cmd)
+  UpdateOrganisations Nothing -> (model, Cmd.none) --Types.generateMessage Types.Standard "Unable to get facilitator details" 5)
+  UpdateOrganisations f -> ({model | facilitatorOrganisations=f},Cmd.none)
   ChangeView v -> case v of
     OverviewView -> ({model | view = OverviewView},Cmd.map UpdateOverview <| Overview.getOverviewData model.overview )
     _ -> ({model | view = v}, Cmd.none)
@@ -81,7 +90,7 @@ view m = div [] [
     viewMessages m,
     case m.view of
       GroupView -> div [] [
-                groupView m.group,
+                groupView m.facilitatorOrganisations m.group,
                 case groupSize m.group of
                     0 -> button [] [text "Project ->"]
                     _ -> button [class "button-primary", onClick (ChangeView ProjectView)] [text "Project ->"]
@@ -116,13 +125,37 @@ navBar model = case model.user of
 
 
 
-groupView g = Html.map UpdateGroup <| case g of
-  Nothing -> Group.view Group.model
-  Just grp -> Group.view grp
+groupView orgs g = Html.map UpdateGroup <| case g of
+  Nothing -> Group.view orgs Group.model
+  Just grp -> Group.view orgs grp
 
 projectView p = Html.map UpdateProject <| case p of
   Nothing -> Project.view Project.model
   Just prj -> Project.view prj
+
+idListToDict ls = let foo x = case x.id of
+                                  Nothing -> Nothing
+                                  Just i -> Just (i, x)
+                  in Dict.fromList <| List.filterMap foo ls
+
+getFacilitatorOrganisations jwt =
+    Http.request {
+            method="GET",
+            url="http://localhost:8080/organisation",
+            body = Http.emptyBody,
+            expect = Http.expectJson <| Decode.list Types.decodeOrganisation,
+            headers = [
+                 Http.header "authorization" jwt
+                ],
+            timeout = Nothing,
+            withCredentials = False
+        } |> Http.toTask
+          |> Task.map idListToDict
+          |> Task.map (UpdateOrganisations << Just)
+          |> Task.attempt (\res -> case res of
+                                       Err e -> UpdateOrganisations Nothing
+                                       Ok o -> o
+                          )
 
 main = Html.program {
            init = init,

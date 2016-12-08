@@ -11629,6 +11629,41 @@ var _user$project$Component_Group$saveGroupMembers = F2(
 									}),
 								grp.members))))));
 	});
+var _user$project$Component_Group$traceDecoder = F2(
+	function (message, decoder) {
+		return _elm_lang$core$Json_Decode$andThen(
+			function (value) {
+				var _p6 = A2(_elm_lang$core$Json_Decode$decodeValue, decoder, value);
+				if (_p6.ctor === 'Ok') {
+					return _elm_lang$core$Json_Decode$succeed(_p6._0);
+				} else {
+					return _elm_lang$core$Json_Decode$fail(
+						A2(_elm_lang$core$Debug$log, message, _p6._0));
+				}
+			})(_elm_lang$core$Json_Decode$value);
+	});
+var _user$project$Component_Group$viewSelectOptions = function (d) {
+	var ls = _elm_lang$core$Dict$toList(d);
+	return A2(
+		_elm_lang$core$List$map,
+		function (_p7) {
+			var _p8 = _p7;
+			return A2(
+				_elm_lang$html$Html$option,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$value(
+						_elm_lang$core$Basics$toString(_p8._0)),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(_p8._1.organisationName),
+					_1: {ctor: '[]'}
+				});
+		},
+		ls);
+};
 var _user$project$Component_Group$Group = F4(
 	function (a, b, c, d) {
 		return {organisation: a, members: b, groupName: c, id: d};
@@ -11665,23 +11700,23 @@ var _user$project$Component_Group$saveGroup = F2(
 	function (jwt, grp) {
 		return A2(
 			_elm_lang$core$Task$attempt,
-			function (_p6) {
+			function (_p9) {
 				return _user$project$Component_Group$SetGroup(
-					_krisajenkins$remotedata$RemoteData$fromResult(_p6));
+					_krisajenkins$remotedata$RemoteData$fromResult(_p9));
 			},
 			A2(_user$project$Component_Group$saveGroupTask, jwt, grp));
 	});
-var _user$project$Component_Group$update = F3(
-	function (jwt, msg, model) {
+var _user$project$Component_Group$update = F4(
+	function (jwt, _p10, msg, model) {
 		var members = model.members;
-		var _p7 = msg;
-		switch (_p7.ctor) {
+		var _p11 = msg;
+		switch (_p11.ctor) {
 			case 'UpdateGroupName':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{groupName: _p7._0}),
+						{groupName: _p11._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'AddGroupMember':
@@ -11709,20 +11744,20 @@ var _user$project$Component_Group$update = F3(
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							members: A2(_elm_lang$core$Dict$remove, _p7._0, members)
+							members: A2(_elm_lang$core$Dict$remove, _p11._0, members)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'UpdateGroupMember':
-				var _p9 = _p7._0;
+				var _p13 = _p11._0;
 				var r = A2(
 					_elm_lang$core$Maybe$map,
 					function (x) {
-						return A3(_user$project$Component_GroupMember$update, jwt, _p7._1, x);
+						return A3(_user$project$Component_GroupMember$update, jwt, _p11._1, x);
 					},
-					A2(_elm_lang$core$Dict$get, _p9, members));
-				var _p8 = r;
-				if (_p8.ctor === 'Nothing') {
+					A2(_elm_lang$core$Dict$get, _p13, members));
+				var _p12 = r;
+				if (_p12.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
 					return {
@@ -11732,8 +11767,8 @@ var _user$project$Component_Group$update = F3(
 							{
 								members: A3(
 									_elm_lang$core$Dict$insert,
-									_p9,
-									_elm_lang$core$Tuple$first(_p8._0),
+									_p13,
+									_elm_lang$core$Tuple$first(_p12._0),
 									members)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
@@ -11745,12 +11780,20 @@ var _user$project$Component_Group$update = F3(
 					_0: model,
 					_1: A2(_user$project$Component_Group$saveGroup, jwt, model)
 				};
-			default:
-				if (_p7._0.ctor === 'Success') {
-					return {ctor: '_Tuple2', _0: _p7._0._0, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'SetGroup':
+				if (_p11._0.ctor === 'Success') {
+					return {ctor: '_Tuple2', _0: _p11._0._0, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{organisation: _p11._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 		}
 	});
 var _user$project$Component_Group$SaveGroup = {ctor: 'SaveGroup'};
@@ -11758,6 +11801,26 @@ var _user$project$Component_Group$RemoveGroupMember = function (a) {
 	return {ctor: 'RemoveGroupMember', _0: a};
 };
 var _user$project$Component_Group$AddGroupMember = {ctor: 'AddGroupMember'};
+var _user$project$Component_Group$UpdateOrganisation = function (a) {
+	return {ctor: 'UpdateOrganisation', _0: a};
+};
+var _user$project$Component_Group$selectEvent = A2(
+	_elm_lang$html$Html_Events$on,
+	'change',
+	A2(
+		_elm_lang$core$Json_Decode$map,
+		_user$project$Component_Group$UpdateOrganisation,
+		A2(
+			_elm_lang$core$Json_Decode$andThen,
+			function (val) {
+				var _p14 = _elm_lang$core$String$toInt(val);
+				if (_p14.ctor === 'Err') {
+					return _elm_lang$core$Json_Decode$fail('Not an integer');
+				} else {
+					return _elm_lang$core$Json_Decode$succeed(_p14._0);
+				}
+			},
+			_elm_lang$html$Html_Events$targetValue)));
 var _user$project$Component_Group$UpdateGroupMember = F2(
 	function (a, b) {
 		return {ctor: 'UpdateGroupMember', _0: a, _1: b};
@@ -11801,53 +11864,53 @@ var _user$project$Component_Group$viewGroupMembers = function (d) {
 var _user$project$Component_Group$UpdateGroupName = function (a) {
 	return {ctor: 'UpdateGroupName', _0: a};
 };
-var _user$project$Component_Group$view = function (model) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{ctor: '[]'},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$input,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$placeholder('Group name'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_Group$UpdateGroupName),
-						_1: {ctor: '[]'}
-					}
-				},
-				{ctor: '[]'}),
-			_1: {
+var _user$project$Component_Group$view = F2(
+	function (morgs, model) {
+		return A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{
 				ctor: '::',
 				_0: A2(
-					_elm_lang$html$Html$div,
-					{ctor: '[]'},
+					_elm_lang$html$Html$input,
 					{
 						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$span,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text(
-									_elm_lang$core$Basics$toString(
-										_elm_lang$core$Dict$size(model.members))),
-								_1: {ctor: '[]'}
-							}),
+						_0: _elm_lang$html$Html_Attributes$placeholder('Group name'),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$html$Html$text(' members'),
+							_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_Group$UpdateGroupName),
 							_1: {ctor: '[]'}
 						}
-					}),
+					},
+					{ctor: '[]'}),
 				_1: {
 					ctor: '::',
 					_0: A2(
 						_elm_lang$html$Html$div,
 						{ctor: '[]'},
-						_user$project$Component_Group$viewGroupMembers(model.members)),
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Group organisation: '),
+							_1: {
+								ctor: '::',
+								_0: function () {
+									var _p15 = morgs;
+									if (_p15.ctor === 'Nothing') {
+										return _elm_lang$html$Html$text('Unable to get org link');
+									} else {
+										return A2(
+											_elm_lang$html$Html$select,
+											{
+												ctor: '::',
+												_0: _user$project$Component_Group$selectEvent,
+												_1: {ctor: '[]'}
+											},
+											_user$project$Component_Group$viewSelectOptions(_p15._0));
+									}
+								}(),
+								_1: {ctor: '[]'}
+							}
+						}),
 					_1: {
 						ctor: '::',
 						_0: A2(
@@ -11856,40 +11919,70 @@ var _user$project$Component_Group$view = function (model) {
 							{
 								ctor: '::',
 								_0: A2(
-									_elm_lang$html$Html$button,
+									_elm_lang$html$Html$span,
+									{ctor: '[]'},
 									{
 										ctor: '::',
-										_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Group$AddGroupMember),
-										_1: {ctor: '[]'}
-									},
-									{
-										ctor: '::',
-										_0: _elm_lang$html$Html$text('Add group member'),
+										_0: _elm_lang$html$Html$text(
+											_elm_lang$core$Basics$toString(
+												_elm_lang$core$Dict$size(model.members))),
 										_1: {ctor: '[]'}
 									}),
 								_1: {
 									ctor: '::',
-									_0: A2(
-										_elm_lang$html$Html$button,
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Group$SaveGroup),
-											_1: {ctor: '[]'}
-										},
-										{
-											ctor: '::',
-											_0: _elm_lang$html$Html$text('Save Group'),
-											_1: {ctor: '[]'}
-										}),
+									_0: _elm_lang$html$Html$text(' members'),
 									_1: {ctor: '[]'}
 								}
 							}),
-						_1: {ctor: '[]'}
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$div,
+								{ctor: '[]'},
+								_user$project$Component_Group$viewGroupMembers(model.members)),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$div,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$button,
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Group$AddGroupMember),
+												_1: {ctor: '[]'}
+											},
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html$text('Add group member'),
+												_1: {ctor: '[]'}
+											}),
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$button,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Group$SaveGroup),
+													_1: {ctor: '[]'}
+												},
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html$text('Save Group'),
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										}
+									}),
+								_1: {ctor: '[]'}
+							}
+						}
 					}
 				}
-			}
-		});
-};
+			});
+	});
 
 var _user$project$Component_Login$Model = F2(
 	function (a, b) {
@@ -12552,6 +12645,19 @@ var _user$project$Component_Project$view = function (model) {
 		});
 };
 
+var _user$project$Main$idListToDict = function (ls) {
+	var foo = function (x) {
+		var _p0 = x.id;
+		if (_p0.ctor === 'Nothing') {
+			return _elm_lang$core$Maybe$Nothing;
+		} else {
+			return _elm_lang$core$Maybe$Just(
+				{ctor: '_Tuple2', _0: _p0._0, _1: x});
+		}
+	};
+	return _elm_lang$core$Dict$fromList(
+		A2(_elm_lang$core$List$filterMap, foo, ls));
+};
 var _user$project$Main$viewMessages = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -12571,26 +12677,27 @@ var _user$project$Main$viewMessages = function (model) {
 			model.messages));
 };
 var _user$project$Main$groupSize = function (g) {
-	var _p0 = g;
-	if (_p0.ctor === 'Nothing') {
+	var _p1 = g;
+	if (_p1.ctor === 'Nothing') {
 		return 0;
 	} else {
-		return _elm_lang$core$Dict$size(_p0._0.members);
+		return _elm_lang$core$Dict$size(_p1._0.members);
 	}
 };
-var _user$project$Main$Model = F7(
-	function (a, b, c, d, e, f, g) {
-		return {group: a, project: b, login: c, overview: d, view: e, user: f, messages: g};
+var _user$project$Main$Model = F8(
+	function (a, b, c, d, e, f, g, h) {
+		return {group: a, project: b, login: c, overview: d, view: e, user: f, facilitatorOrganisations: g, messages: h};
 	});
 var _user$project$Main$OverviewView = {ctor: 'OverviewView'};
 var _user$project$Main$LoginView = {ctor: 'LoginView'};
-var _user$project$Main$model = A7(
+var _user$project$Main$model = A8(
 	_user$project$Main$Model,
 	_elm_lang$core$Maybe$Nothing,
 	_elm_lang$core$Maybe$Nothing,
 	A2(_user$project$Component_Login$Model, '', ''),
 	_elm_lang$core$Tuple$first(_user$project$Component_Overview$init),
 	_user$project$Main$LoginView,
+	_elm_lang$core$Maybe$Nothing,
 	_elm_lang$core$Maybe$Nothing,
 	{ctor: '[]'});
 var _user$project$Main$init = {ctor: '_Tuple2', _0: _user$project$Main$model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -12604,8 +12711,8 @@ var _user$project$Main$ChangeView = function (a) {
 	return {ctor: 'ChangeView', _0: a};
 };
 var _user$project$Main$navBar = function (model) {
-	var _p1 = model.user;
-	if (_p1.ctor === 'Nothing') {
+	var _p2 = model.user;
+	if (_p2.ctor === 'Nothing') {
 		return A2(
 			_elm_lang$html$Html$nav,
 			{
@@ -12720,6 +12827,46 @@ var _user$project$Main$navBar = function (model) {
 			});
 	}
 };
+var _user$project$Main$UpdateOrganisations = function (a) {
+	return {ctor: 'UpdateOrganisations', _0: a};
+};
+var _user$project$Main$getFacilitatorOrganisations = function (jwt) {
+	return A2(
+		_elm_lang$core$Task$attempt,
+		function (res) {
+			var _p3 = res;
+			if (_p3.ctor === 'Err') {
+				return _user$project$Main$UpdateOrganisations(_elm_lang$core$Maybe$Nothing);
+			} else {
+				return _p3._0;
+			}
+		},
+		A2(
+			_elm_lang$core$Task$map,
+			function (_p4) {
+				return _user$project$Main$UpdateOrganisations(
+					_elm_lang$core$Maybe$Just(_p4));
+			},
+			A2(
+				_elm_lang$core$Task$map,
+				_user$project$Main$idListToDict,
+				_elm_lang$http$Http$toTask(
+					_elm_lang$http$Http$request(
+						{
+							method: 'GET',
+							url: 'http://localhost:8080/organisation',
+							body: _elm_lang$http$Http$emptyBody,
+							expect: _elm_lang$http$Http$expectJson(
+								_elm_lang$core$Json_Decode$list(_user$project$Generated_Types$decodeOrganisation)),
+							headers: {
+								ctor: '::',
+								_0: A2(_elm_lang$http$Http$header, 'authorization', jwt),
+								_1: {ctor: '[]'}
+							},
+							timeout: _elm_lang$core$Maybe$Nothing,
+							withCredentials: false
+						})))));
+};
 var _user$project$Main$UpdateOverview = function (a) {
 	return {ctor: 'UpdateOverview', _0: a};
 };
@@ -12734,11 +12881,11 @@ var _user$project$Main$projectView = function (p) {
 		_elm_lang$html$Html$map,
 		_user$project$Main$UpdateProject,
 		function () {
-			var _p2 = p;
-			if (_p2.ctor === 'Nothing') {
+			var _p5 = p;
+			if (_p5.ctor === 'Nothing') {
 				return _user$project$Component_Project$view(_user$project$Component_Project$model);
 			} else {
-				return _user$project$Component_Project$view(_p2._0);
+				return _user$project$Component_Project$view(_p5._0);
 			}
 		}());
 };
@@ -12747,14 +12894,14 @@ var _user$project$Main$UpdateGroup = function (a) {
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
+		var _p6 = msg;
+		switch (_p6.ctor) {
 			case 'Tick':
 				var oldmessages = model.messages;
 				var newmessages = A2(
 					_elm_lang$core$List$filter,
 					function (x) {
-						return _elm_lang$core$Native_Utils.cmp(x.messageExpires, _p3._0) > 0;
+						return _elm_lang$core$Native_Utils.cmp(x.messageExpires, _p6._0) > 0;
 					},
 					oldmessages);
 				return {
@@ -12772,9 +12919,9 @@ var _user$project$Main$update = F2(
 						{user: _elm_lang$core$Maybe$Nothing, view: _user$project$Main$LoginView}),
 					_1: A2(
 						_elm_lang$core$Platform_Cmd$map,
-						function (_p4) {
+						function (_p7) {
 							return _user$project$Main$UpdateLogin(
-								_user$project$Component_Login$Message(_p4));
+								_user$project$Component_Login$Message(_p7));
 						},
 						A3(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Logged out', 3))
 				};
@@ -12788,13 +12935,14 @@ var _user$project$Main$update = F2(
 							return _.jwtToken;
 						},
 						model.user));
-				var _p5 = A3(
+				var _p8 = A4(
 					_user$project$Component_Group$update,
 					jwt,
-					_p3._0,
+					model.facilitatorOrganisations,
+					_p6._0,
 					A2(_elm_lang$core$Maybe$withDefault, _user$project$Component_Group$model, model.group));
-				var newgroup = _p5._0;
-				var cmd = _p5._1;
+				var newgroup = _p8._0;
+				var cmd = _p8._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -12807,7 +12955,7 @@ var _user$project$Main$update = F2(
 			case 'UpdateProject':
 				var newproject = A2(
 					_user$project$Component_Project$update,
-					_p3._0,
+					_p6._0,
 					A2(_elm_lang$core$Maybe$withDefault, _user$project$Component_Project$model, model.project));
 				return {
 					ctor: '_Tuple2',
@@ -12819,9 +12967,9 @@ var _user$project$Main$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'UpdateLogin':
-				switch (_p3._0.ctor) {
+				switch (_p6._0.ctor) {
 					case 'Message':
-						var newmessages = {ctor: '::', _0: _p3._0._0, _1: model.messages};
+						var newmessages = {ctor: '::', _0: _p6._0._0, _1: model.messages};
 						var oldmessages = model.messages;
 						return {
 							ctor: '_Tuple2',
@@ -12831,25 +12979,25 @@ var _user$project$Main$update = F2(
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					case 'LoginSuccess':
-						var _p8 = _p3._0._0;
+						var _p11 = _p6._0._0;
 						var overviewmodel = model.overview;
 						var newoverview = _elm_lang$core$Native_Utils.update(
 							overviewmodel,
 							{
-								jwtToken: _elm_lang$core$Maybe$Just(_p8.jwtToken)
+								jwtToken: _elm_lang$core$Maybe$Just(_p11.jwtToken)
 							});
-						var _p6 = A2(
+						var _p9 = A2(
 							_user$project$Component_Login$update,
-							_user$project$Component_Login$LoginSuccess(_p8),
+							_user$project$Component_Login$LoginSuccess(_p11),
 							model.login);
-						var newlogin = _p6._0;
-						var msg = _p6._1;
+						var newlogin = _p9._0;
+						var msg = _p9._1;
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
 								{
-									user: _elm_lang$core$Maybe$Just(_p8),
+									user: _elm_lang$core$Maybe$Just(_p11),
 									view: _user$project$Main$OverviewView,
 									login: newlogin,
 									overview: newoverview
@@ -12865,19 +13013,23 @@ var _user$project$Main$update = F2(
 										ctor: '::',
 										_0: A2(
 											_elm_lang$core$Platform_Cmd$map,
-											function (_p7) {
+											function (_p10) {
 												return _user$project$Main$UpdateLogin(
-													_user$project$Component_Login$Message(_p7));
+													_user$project$Component_Login$Message(_p10));
 											},
 											A3(_user$project$Helpers_Types$generateMessage, _user$project$Helpers_Types$Standard, 'Logged in', 3)),
-										_1: {ctor: '[]'}
+										_1: {
+											ctor: '::',
+											_0: _user$project$Main$getFacilitatorOrganisations(_p11.jwtToken),
+											_1: {ctor: '[]'}
+										}
 									}
 								})
 						};
 					default:
-						var _p9 = A2(_user$project$Component_Login$update, _p3._0, model.login);
-						var newlogin = _p9._0;
-						var msg = _p9._1;
+						var _p12 = A2(_user$project$Component_Login$update, _p6._0, model.login);
+						var newlogin = _p12._0;
+						var msg = _p12._1;
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -12887,7 +13039,7 @@ var _user$project$Main$update = F2(
 						};
 				}
 			case 'UpdateOverview':
-				switch (_p3._0.ctor) {
+				switch (_p6._0.ctor) {
 					case 'AddGroup':
 						return {
 							ctor: '_Tuple2',
@@ -12905,9 +13057,9 @@ var _user$project$Main$update = F2(
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					default:
-						var _p10 = A2(_user$project$Component_Overview$update, _p3._0, model.overview);
-						var newoverview = _p10._0;
-						var cmd = _p10._1;
+						var _p13 = A2(_user$project$Component_Overview$update, _p6._0, model.overview);
+						var newoverview = _p13._0;
+						var cmd = _p13._1;
 						return {
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
@@ -12916,10 +13068,22 @@ var _user$project$Main$update = F2(
 							_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$UpdateOverview, cmd)
 						};
 				}
+			case 'UpdateOrganisations':
+				if (_p6._0.ctor === 'Nothing') {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{facilitatorOrganisations: _p6._0}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
 			default:
-				var _p12 = _p3._0;
-				var _p11 = _p12;
-				if (_p11.ctor === 'OverviewView') {
+				var _p15 = _p6._0;
+				var _p14 = _p15;
+				if (_p14.ctor === 'OverviewView') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -12935,25 +13099,26 @@ var _user$project$Main$update = F2(
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{view: _p12}),
+							{view: _p15}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 		}
 	});
-var _user$project$Main$groupView = function (g) {
-	return A2(
-		_elm_lang$html$Html$map,
-		_user$project$Main$UpdateGroup,
-		function () {
-			var _p13 = g;
-			if (_p13.ctor === 'Nothing') {
-				return _user$project$Component_Group$view(_user$project$Component_Group$model);
-			} else {
-				return _user$project$Component_Group$view(_p13._0);
-			}
-		}());
-};
+var _user$project$Main$groupView = F2(
+	function (orgs, g) {
+		return A2(
+			_elm_lang$html$Html$map,
+			_user$project$Main$UpdateGroup,
+			function () {
+				var _p16 = g;
+				if (_p16.ctor === 'Nothing') {
+					return A2(_user$project$Component_Group$view, orgs, _user$project$Component_Group$model);
+				} else {
+					return A2(_user$project$Component_Group$view, orgs, _p16._0);
+				}
+			}());
+	});
 var _user$project$Main$view = function (m) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -12967,20 +13132,20 @@ var _user$project$Main$view = function (m) {
 				_1: {
 					ctor: '::',
 					_0: function () {
-						var _p14 = m.view;
-						switch (_p14.ctor) {
+						var _p17 = m.view;
+						switch (_p17.ctor) {
 							case 'GroupView':
 								return A2(
 									_elm_lang$html$Html$div,
 									{ctor: '[]'},
 									{
 										ctor: '::',
-										_0: _user$project$Main$groupView(m.group),
+										_0: A2(_user$project$Main$groupView, m.facilitatorOrganisations, m.group),
 										_1: {
 											ctor: '::',
 											_0: function () {
-												var _p15 = _user$project$Main$groupSize(m.group);
-												if (_p15 === 0) {
+												var _p18 = _user$project$Main$groupSize(m.group);
+												if (_p18 === 0) {
 													return A2(
 														_elm_lang$html$Html$button,
 														{ctor: '[]'},
@@ -13059,7 +13224,7 @@ var _user$project$Main$main = _elm_lang$html$Html$program(
 		init: _user$project$Main$init,
 		view: _user$project$Main$view,
 		update: _user$project$Main$update,
-		subscriptions: function (_p16) {
+		subscriptions: function (_p19) {
 			return A2(
 				_elm_lang$core$Time$every,
 				_elm_lang$core$Time$second,

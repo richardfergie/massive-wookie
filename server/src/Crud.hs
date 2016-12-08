@@ -54,6 +54,9 @@ data Crud a where
   DeleteOrganisation :: OrganisationId -> Crud ()
   GetOrganisation :: OrganisationId
                            -> Crud (Maybe (Entity Organisation))
+  GetOrganisationsByFacilitatorId :: FacilitatorId
+                                  -> Crud [Entity Organisation]
+
   CreateUser :: User -> Crud (Entity User)
   SetUser :: UserId -> User -> Crud (Entity User)
   DeleteUser :: UserId -> Crud ()
@@ -87,6 +90,7 @@ createOrganisation = (.) singleton CreateOrganisation
 setOrganisation x y = ($) singleton (SetOrganisation x y)
 deleteOrganisation = (.) singleton DeleteOrganisation
 getOrganisation = (.) singleton GetOrganisation
+getOrganisationsByFacilitatorId = singleton . GetOrganisationsByFacilitatorId
 
 createUser = (.) singleton CreateUser
 setUser x y = ($) singleton (SetUser x y)

@@ -61,7 +61,8 @@ createAdmin = do
 createTestData = do
   createAdmin
   Crud.setOrganisation 0 $ Types.Organisation "Test Organisation"
-  Crud.setFacilitator 0 $ Types.Facilitator "Test Facilitator" 0 [0]
+  Crud.setOrganisation 1 $ Types.Organisation "Another Test Org"
+  Crud.setFacilitator 0 $ Types.Facilitator "Test Facilitator" 0 [0,1]
 
 corsPolicy = const $ Just simpleCorsResourcePolicy{corsRequestHeaders = simpleResponseHeaders ++ ["Content-Type", "authorization"], corsMethods = "PUT" : "DELETE" : simpleMethods}
 

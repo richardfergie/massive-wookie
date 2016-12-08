@@ -163,6 +163,22 @@ getWorld :: (IsIndexOf Int ixs, Indexable ixs (Entity a)) => Lens.Getter World (
 getWorld lens k = reader $ runReader $ Lens.magnify lens (tableGet k)
 
 --
+-- User queries
+--
+insertUser = insertWorld worldUsers
+deleteUser = deleteWorld worldUsers
+updateUser = updateWorld worldUsers
+getUser = getWorld worldUsers
+
+getUserByUsername :: Types.Username -> Query World (Maybe (Entity Types.User))
+getUserByUsername u = do
+  Table _ users <- fmap _worldUsers ask
+  return $ getOne $ getEQ u users
+
+deriving instance S.Serialize Types.User
+$(deriveSafeCopy 0 'base ''Types.User)
+
+--
 -- GroupMember queries
 --
 insertGroupMember = insertWorld worldGroupMembers
@@ -171,6 +187,55 @@ updateGroupMember = updateWorld worldGroupMembers
 getGroupMember = getWorld worldGroupMembers
 deriving instance S.Serialize GroupMember
 $(deriveSafeCopy 0 'base ''GroupMember)
+
+--
+-- Organisation queries
+--
+insertOrganisation = insertWorld worldOrganisations
+deleteOrganisation = deleteWorld worldOrganisations
+updateOrganisation = updateWorld worldOrganisations
+getOrganisation = getWorld worldOrganisations
+
+getOrganisationsByFacilitatorId :: Types.FacilitatorId -> Query World [Types.Entity Types.Organisation]
+getOrganisationsByFacilitatorId fid = do
+  mfac <- getFacilitator fid
+  case mfac of
+    Nothing -> return []
+    Just (Types.Entity _ fac) -> do
+      orgs <- mapM getOrganisation $ Types.facilitatorOrganisations fac
+      return $ catMaybes orgs
+
+--
+-- Facilitator queries
+--
+deleteFacilitator = deleteWorld worldFacilitators
+getFacilitator = getWorld worldFacilitators
+
+getFacilitatorByUserId :: Types.UserId -> Query World (Maybe (Types.Entity Types.Facilitator))
+getFacilitatorByUserId uid = do
+  Table _ facilitators <- fmap _worldFacilitators ask
+  return $ getOne $ getEQ uid facilitators
+
+checkFacilitatorKeys f = do
+  ukey <- fmap isJust $ getUser $ Types.facilitatorUser f
+  orgkeys <- fmap (all isJust) $ mapM getOrganisation $ Types.facilitatorOrganisations f
+  return $ ukey && orgkeys
+
+insertFacilitator f = do
+  fkey <- liftQuery $ checkFacilitatorKeys f
+  if fkey
+    then Right <$> insertWorld worldFacilitators f
+    else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
+
+updateFacilitator k v = do
+  fkey <- liftQuery $ checkFacilitatorKeys v
+  if fkey
+    then Right <$> updateWorld worldFacilitators k v
+    else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
+
+
+deriving instance S.Serialize Types.Facilitator
+$(deriveSafeCopy 0 'base ''Types.Facilitator)
 
 --
 -- Group Queries
@@ -203,62 +268,7 @@ getGroupsByOrganisationId :: Types.OrganisationId
 getGroupsByOrganisationId oid = do
   Table _ groups <- fmap _worldGroups ask
   return $ toList $ getEQ oid groups
---
--- Organisation queries
---
-insertOrganisation = insertWorld worldOrganisations
-deleteOrganisation = deleteWorld worldOrganisations
-updateOrganisation = updateWorld worldOrganisations
-getOrganisation = getWorld worldOrganisations
-deriving instance S.Serialize Types.Organisation
-$(deriveSafeCopy 0 'base ''Types.Organisation)
 
-
---
--- User queries
---
-insertUser = insertWorld worldUsers
-deleteUser = deleteWorld worldUsers
-updateUser = updateWorld worldUsers
-getUser = getWorld worldUsers
-
-getUserByUsername :: Types.Username -> Query World (Maybe (Entity Types.User))
-getUserByUsername u = do
-  Table _ users <- fmap _worldUsers ask
-  return $ getOne $ getEQ u users
-
-deriving instance S.Serialize Types.User
-$(deriveSafeCopy 0 'base ''Types.User)
-
---
--- Facilitator queries
---
-deriving instance S.Serialize Types.Facilitator
-$(deriveSafeCopy 0 'base ''Types.Facilitator)
-deleteFacilitator = deleteWorld worldFacilitators
-getFacilitator = getWorld worldFacilitators
-
-getFacilitatorByUserId :: Types.UserId -> Query World (Maybe (Types.Entity Types.Facilitator))
-getFacilitatorByUserId uid = do
-  Table _ facilitators <- fmap _worldFacilitators ask
-  return $ getOne $ getEQ uid facilitators
-
-checkFacilitatorKeys f = do
-  ukey <- fmap isJust $ getUser $ Types.facilitatorUser f
-  orgkeys <- fmap (all isJust) $ mapM getOrganisation $ Types.facilitatorOrganisations f
-  return $ ukey && orgkeys
-
-insertFacilitator f = do
-  fkey <- liftQuery $ checkFacilitatorKeys f
-  if fkey
-    then Right <$> insertWorld worldFacilitators f
-    else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
-
-updateFacilitator k v = do
-  fkey <- liftQuery $ checkFacilitatorKeys v
-  if fkey
-    then Right <$> updateWorld worldFacilitators k v
-    else return $ Left $ Crud.ForeignKeyMissing "Missing foreign key"
 
 --
 -- Project queries
@@ -300,6 +310,9 @@ updateProject k v = do
 gWorld :: Query World World
 gWorld = ask
 
+deriving instance S.Serialize Types.Organisation
+$(deriveSafeCopy 0 'base ''Types.Organisation)
+
 $(deriveSafeCopy 0 'base ''World)
 
 $(deriveSafeCopy 0 'base ''Crud.CRUDError)
@@ -328,6 +341,7 @@ $(makeAcidic ''World ['insertGroup,
                       'deleteOrganisation,
                       'updateOrganisation,
                       'getOrganisation,
+                      'getOrganisationsByFacilitatorId,
                       'insertUser,
                       'deleteUser,
                       'updateUser,
@@ -359,6 +373,7 @@ acidStateCrud acid p = do
   Crud.DeleteOrganisation x :>>= ps -> update' acid (DeleteOrganisation x) >>= acidStateCrud acid . ps
   Crud.SetOrganisation k v :>>= ps -> update' acid (UpdateOrganisation k v) >>= acidStateCrud acid . ps
   Crud.CreateOrganisation v :>>= ps -> update' acid (InsertOrganisation v) >>= acidStateCrud acid . ps
+  Crud.GetOrganisationsByFacilitatorId f :>>= ps -> query' acid (GetOrganisationsByFacilitatorId f) >>= acidStateCrud acid . ps
 
   Crud.GetFacilitator x :>>= ps -> query' acid (GetFacilitator x) >>= acidStateCrud acid . ps
   Crud.DeleteFacilitator x :>>= ps -> update' acid (DeleteFacilitator x) >>= acidStateCrud acid . ps

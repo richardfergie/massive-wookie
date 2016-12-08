@@ -25,6 +25,7 @@ type API = "groupmember" :> CRUD Types.GroupMember
         :<|> "project" :> CRUD Types.Project
         :<|> "organisation" :> CRUD Types.Organisation
         :<|> "facilitator" :> CRUD Types.Facilitator
+        :<|> "current" :> "facilitator" :> Get '[JSON] (Types.Entity Types.Facilitator)
 
 crudder creator deleter setter getter = (\ i -> requireUser >> (runDB $ creator i))
              :<|> (\i -> requireUser >> (runDB $ deleter i) >> return NoContent)
@@ -74,11 +75,26 @@ crudFacilitator = return [] :<|> (crudder Crud.createFacilitator
                                           Crud.setFacilitator
                                           Crud.getFacilitator)
 
+getUserOrganisations uid = do
+  mfac <- Crud.getFacilitatorByUserId uid
+  case mfac of
+    Nothing -> return []
+    Just fac -> Crud.getOrganisationsByFacilitatorId $ Types.entityKey fac
+
 crudOrganisation :: ServerT (CRUD Types.Organisation) (AppServer)
-crudOrganisation = return [] :<|> (crudder Crud.createOrganisation
-                                           Crud.deleteOrganisation
-                                           Crud.setOrganisation
-                                           Crud.getOrganisation)
+crudOrganisation = (fmap _userCredsId requireUser >>= runDB . getUserOrganisations)
+  :<|> (crudder Crud.createOrganisation
+                Crud.deleteOrganisation
+                Crud.setOrganisation
+                Crud.getOrganisation)
+
+getUserFacilitator :: AppServer (Types.Entity Types.Facilitator)
+getUserFacilitator = do
+  uid <- fmap _userCredsId requireUser
+  mfac <- runDB $ Crud.getFacilitatorByUserId uid
+  case mfac of
+    Nothing -> throwError err404
+    Just fac -> return fac
 
 apiServer :: ServerT API (AppServer)
 apiServer = crudGroupMember
@@ -86,3 +102,4 @@ apiServer = crudGroupMember
           :<|> crudProject
           :<|> crudOrganisation
           :<|> crudFacilitator
+          :<|> getUserFacilitator

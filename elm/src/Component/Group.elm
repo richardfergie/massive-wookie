@@ -12,6 +12,7 @@ import Generated.Types as Types
 import Task
 import Http
 import RemoteData
+import Json.Decode as Decode
 
 type alias Group =
     {
@@ -23,6 +24,7 @@ type alias Group =
 
 type Msg = UpdateGroupName String
          | UpdateGroupMember Int GroupMember.Msg
+         | UpdateOrganisation Int
          | AddGroupMember
          | RemoveGroupMember Int
          | SaveGroup
@@ -31,8 +33,32 @@ type Msg = UpdateGroupName String
 viewGroupMembers : Dict.Dict Int Types.GroupMember -> List (Html Msg)
 viewGroupMembers d = Dict.foldl (\k v acc -> acc ++ [Html.map (UpdateGroupMember k) (GroupMember.view v), button [onClick <| RemoveGroupMember k] [text "Remove"]]) [] d
 
-view : Group -> Html Msg
-view model = div [] <| [input [placeholder "Group name", onInput UpdateGroupName] [],
+viewSelectOptions d = let ls = Dict.toList d
+                      in List.map (\(k,v) -> option [value <| toString k] [text v.organisationName]) ls
+
+traceDecoder : String -> Decode.Decoder msg -> Decode.Decoder msg
+traceDecoder message decoder =
+    Decode.value |> (Decode.andThen <| \value ->
+        case Decode.decodeValue decoder value of
+            Ok decoded ->
+                Decode.succeed decoded
+            Err err ->
+                Decode.fail <| Debug.log message <| err)
+
+selectEvent = on "change" <| (targetValue |> Decode.andThen (\val -> case String.toInt val of
+                                                                         Err e -> Decode.fail "Not an integer"
+                                                                         Ok i -> Decode.succeed i
+                                                            )
+                                          |> Decode.map UpdateOrganisation
+                             )
+
+view : Maybe (Dict.Dict Int Types.Organisation) -> Group -> Html Msg
+view morgs model = div [] <| [input [placeholder "Group name", onInput UpdateGroupName] [],
+                        div [] [text "Group organisation: ",
+                                case morgs of
+                                    Nothing -> text "Unable to get org link"
+                                    Just orgs -> select [selectEvent] <| viewSelectOptions orgs
+                               ],
                         div [] [
                              span [] [text <| toString <| Dict.size model.members],
                              text " members"
@@ -44,8 +70,8 @@ view model = div [] <| [input [placeholder "Group name", onInput UpdateGroupName
                             ]
                        ]
 
-update : String -> Msg -> Group -> (Group, Cmd Msg)
-update jwt msg model =
+update : String -> Maybe (Dict.Dict Int Types.Organisation) -> Msg -> Group -> (Group, Cmd Msg)
+update jwt _ msg model =
   let members = model.members
   in case msg of
     UpdateGroupName n -> ({model | groupName = n}, Cmd.none)
@@ -59,6 +85,7 @@ update jwt msg model =
     SaveGroup -> (model, saveGroup jwt model)
     SetGroup (RemoteData.Success g) -> (g, Cmd.none)
     SetGroup _ -> (model, Cmd.none)
+    UpdateOrganisation oid -> ({model | organisation = oid}, Cmd.none)
 
 model = Group 1000 Dict.empty "" Nothing
 
