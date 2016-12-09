@@ -55,6 +55,7 @@ type Msg = ProjectResponse (WebData (List (Entity Project)))
          | GroupResponse (WebData (List Group))
          | AddGroup
          | AddProject
+         | ChangeView View
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = case msg of
@@ -62,6 +63,7 @@ update msg model = case msg of
   GroupResponse resp -> ({model | groups = resp}, Cmd.none)
   AddProject -> (model, Cmd.none)
   AddGroup -> (model, Cmd.none)
+  ChangeView _ -> (model, Cmd.none)
 
 view : Model -> Html Msg
 view model = case model.jwtToken of
@@ -109,7 +111,9 @@ viewGroups model = case model.groups of
 
 viewGroup : Group -> Html Msg
 viewGroup grp = div [] [
-                 div [] [text grp.groupName]
+                 div [] [
+                     a [onClick (ChangeView <| GroupView grp.id)] [text grp.groupName]
+                     ]
                 ]
 
 main = Html.program {

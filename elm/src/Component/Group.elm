@@ -29,12 +29,15 @@ type Msg = UpdateGroupName String
          | RemoveGroupMember Int
          | SaveGroup
          | SetGroup (RemoteData.WebData Group)
+         | LoadGroup Int
+         | ChangeView Types.View
 
 viewGroupMembers : Dict.Dict Int Types.GroupMember -> List (Html Msg)
 viewGroupMembers d = Dict.foldl (\k v acc -> acc ++ [Html.map (UpdateGroupMember k) (GroupMember.view v), button [onClick <| RemoveGroupMember k] [text "Remove"]]) [] d
 
-viewSelectOptions d = let ls = Dict.toList d
-                      in List.map (\(k,v) -> option [value <| toString k] [text v.organisationName]) ls
+viewSelectOptions i d = let ls = Dict.toList d
+                            isSelected k = selected (k==i)
+                        in List.map (\(k,v) -> option [isSelected k, value <| toString k] [text v.organisationName]) ls
 
 traceDecoder : String -> Decode.Decoder msg -> Decode.Decoder msg
 traceDecoder message decoder =
@@ -52,12 +55,14 @@ selectEvent = on "change" <| (targetValue |> Decode.andThen (\val -> case String
                                           |> Decode.map UpdateOrganisation
                              )
 
+groupSize g = Dict.size g.members
+
 view : Maybe (Dict.Dict Int Types.Organisation) -> Group -> Html Msg
-view morgs model = div [] <| [input [placeholder "Group name", onInput UpdateGroupName] [],
+view morgs model = div [] <| [input [placeholder "Group name", onInput UpdateGroupName, value model.groupName] [],
                         div [] [text "Group organisation: ",
                                 case morgs of
                                     Nothing -> text "Unable to get org link"
-                                    Just orgs -> select [selectEvent] <| viewSelectOptions orgs
+                                    Just orgs -> select [selectEvent] <| viewSelectOptions model.organisation orgs
                                ],
                         div [] [
                              span [] [text <| toString <| Dict.size model.members],
@@ -67,7 +72,12 @@ view morgs model = div [] <| [input [placeholder "Group name", onInput UpdateGro
                         div [] [
                              button [onClick AddGroupMember] [text "Add group member"],
                              button [onClick SaveGroup] [text "Save Group"]
-                            ]
+                            ],
+                        div [] [
+                        case groupSize model of
+                            0 -> button [] [text "Project ->"]
+                            _ -> button [class "button-primary"] [text "Project ->"]
+                             ]
                        ]
 
 update : String -> Maybe (Dict.Dict Int Types.Organisation) -> Msg -> Group -> (Group, Cmd Msg)
@@ -86,8 +96,8 @@ update jwt _ msg model =
     SetGroup (RemoteData.Success g) -> (g, Cmd.none)
     SetGroup _ -> (model, Cmd.none)
     UpdateOrganisation oid -> ({model | organisation = oid}, Cmd.none)
-
-model = Group 1000 Dict.empty "" Nothing
+    LoadGroup i -> (model, Task.attempt (SetGroup << RemoteData.fromResult) <| loadGroup jwt i)
+    ChangeView _ -> (model, Cmd.none)
 
 -- save group needs to first save the members and only then save the group
 -- Cmd.batch doesn't have any ordering, so must use Task instead
@@ -144,3 +154,22 @@ addNumbers xs = let m = List.length xs
                 in List.map2 (\x y -> (x,y)) rng xs
 
 saveGroup jwt grp = Task.attempt (RemoteData.fromResult >> SetGroup) <| saveGroupTask jwt grp
+
+loadGroupHttp jwt i =
+    Http.request {
+            method = "GET",
+            url = "http://localhost:8080/group/" ++ toString i,
+            body = Http.emptyBody,
+            expect = Http.expectJson Types.decodeGroup,
+            headers = [
+                 Http.header "authorization" jwt
+            ],
+            timeout = Nothing,
+            withCredentials = False
+        } |> Http.toTask
+
+loadGroup : String -> Int -> Task.Task Http.Error Group
+loadGroup jwt i = loadGroupHttp jwt i
+                |> Task.andThen (\wiregroup -> List.map (GroupMember.loadGroupMemberHttp jwt) wiregroup.members |> Task.sequence |> Task.map (addNumbers >> Dict.fromList) |> Task.andThen (\dict -> fromWireGroup dict wiregroup |> Task.succeed))
+
+loadGroupCmd jwt i =  Task.attempt (SetGroup << RemoteData.fromResult) <| loadGroup jwt i

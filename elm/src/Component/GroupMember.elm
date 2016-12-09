@@ -7,6 +7,8 @@ import Date exposing (..)
 import Helpers.Types exposing (..)
 import Date.Extra.Create exposing (dateFromFields)
 import Date.Extra.Core exposing (intToMonth)
+import Date.Extra.Config.Config_en_gb exposing (config)
+import Date.Extra.Format exposing (format)
 import Generated.Types exposing (..)
 import Helpers.Types as Types
 import Http
@@ -20,10 +22,10 @@ type Msg = UpdateFirstname String
 
 view : GroupMember -> Html Msg
 view model = div [] [
-              input [placeholder "First name", onInput UpdateFirstname] [],
-              input [placeholder "Last name", onInput UpdateLastname] [],
+              input [placeholder "First name", onInput UpdateFirstname, value model.firstname] [],
+              input [placeholder "Last name", onInput UpdateLastname, value model.lastname] [],
               label [] [text "Date of birth"],
-              node "input" [type_ "date", onInput UpdateDob] []
+              node "input" [type_ "date", onInput UpdateDob, value <| format config "%Y-%m-%d" model.dob] []
              ]
 
 update : String -> Msg -> GroupMember -> (Model, Cmd Msg)
@@ -41,3 +43,16 @@ updateGroupMember jwt msg model =
 startDate = dateFromFields 2000 (intToMonth 1) 1 0 0 0 0
 
 model = GroupMember "" "" startDate Nothing
+
+loadGroupMemberHttp jwt i =
+    Http.request {
+            method = "GET",
+            url = "http://localhost:8080/groupmember/" ++ toString i,
+            body = Http.emptyBody,
+            expect = Http.expectJson decodeGroupMember,
+            headers = [
+                 Http.header "authorization" jwt
+            ],
+            timeout = Nothing,
+            withCredentials = False
+        } |> Http.toTask

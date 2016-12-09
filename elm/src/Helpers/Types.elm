@@ -9,6 +9,11 @@ import Json.Decode.Pipeline exposing (..)
 import Task
 import Time
 
+type View = GroupView (Maybe Int)
+          | ProjectView
+          | LoginView
+          | OverviewView
+
 type MessageType = Important
                  | Standard
 

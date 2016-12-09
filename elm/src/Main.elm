@@ -17,37 +17,28 @@ import RemoteData
 import Http
 import Json.Decode as Decode
 
-type View = GroupView
-          | ProjectView
-          | LoginView
-          | OverviewView
-
 type alias Model =
     {
         group : Maybe Group.Group,
         project : Maybe Project.Project,
         login : Login.Model,
         overview : Overview.Model,
-        view : View,
+        view : Types.View,
         user : Maybe Login.LoginDetails,
         facilitatorOrganisations : Maybe (Dict.Dict Int Types.Organisation),
         messages : List Types.Message
     }
 
-model = Model Nothing Nothing (Login.Model "" "") (Tuple.first Overview.init) LoginView Nothing Nothing []
+model = Model Nothing Nothing (Login.Model "" "") (Tuple.first Overview.init) Types.LoginView Nothing Nothing []
 
 init = (model, Cmd.none)
-
-groupSize g = case g of
-  Nothing -> 0
-  Just grp -> Dict.size grp.members
 
 type Msg = UpdateGroup Group.Msg
          | UpdateProject Project.Msg
          | UpdateLogin Login.Msg
          | UpdateOverview Overview.Msg
          | UpdateOrganisations (Maybe (Dict.Dict Int Types.Organisation))
-         | ChangeView View
+         | ChangeView Types.View
          | Logout
          | Tick Time.Time
 
@@ -56,9 +47,11 @@ update msg model = case msg of
   Tick t -> let oldmessages = model.messages
                 newmessages = List.filter (\x -> x.messageExpires > t) oldmessages
             in ({model | messages = newmessages}, Cmd.none)
-  Logout -> ({model | user = Nothing, view=LoginView}, Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged out" 3)
+  Logout -> ({model | user = Nothing, view=Types.LoginView}, Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged out" 3)
+  UpdateGroup (Group.ChangeView v) -> ({model | view=v},Cmd.none)
   UpdateGroup g -> let jwt = Maybe.withDefault "" <| Maybe.map .jwtToken model.user
-                       (newgroup, cmd) = Group.update jwt model.facilitatorOrganisations g <| Maybe.withDefault Group.model model.group
+                       orgid = Maybe.withDefault 0 <| List.head <| Dict.keys <| Maybe.withDefault Dict.empty model.facilitatorOrganisations
+                       (newgroup, cmd) = Group.update jwt model.facilitatorOrganisations g <| Maybe.withDefault (Group.Group orgid Dict.empty "" Nothing) model.group
                    in ({model | group = Just newgroup}, Cmd.map UpdateGroup cmd)
   UpdateProject p -> let newproject = Project.update p <| Maybe.withDefault Project.model model.project
                      in ({model | project = Just newproject},Cmd.none)
@@ -68,20 +61,29 @@ update msg model = case msg of
   UpdateLogin (Login.LoginSuccess u) -> let (newlogin,msg) = Login.update (Login.LoginSuccess u) model.login
                                             overviewmodel = model.overview
                                             newoverview = {overviewmodel | jwtToken = Just u.jwtToken}
-                                  in ({model | user = Just u, view=OverviewView, login=newlogin, overview=newoverview}, Cmd.batch [Cmd.map UpdateOverview <| Overview.getOverviewData newoverview,
+                                  in ({model | user = Just u, view=Types.OverviewView, login=newlogin, overview=newoverview}, Cmd.batch [Cmd.map UpdateOverview <| Overview.getOverviewData newoverview,
                           Cmd.map (UpdateLogin << Login.Message) <| Types.generateMessage Types.Standard "Logged in" 3,
                                              getFacilitatorOrganisations u.jwtToken]
                                           )
   UpdateLogin l -> let (newlogin,msg) = Login.update l model.login
                    in ({model | login=newlogin}, Cmd.map UpdateLogin msg)
-  UpdateOverview Overview.AddGroup -> ({model | view=GroupView}, Cmd.none)
-  UpdateOverview Overview.AddProject -> ({model | view=ProjectView}, Cmd.none)
+  UpdateOverview Overview.AddGroup -> ({model | view=Types.GroupView Nothing, group=Nothing}, Cmd.none)
+  UpdateOverview Overview.AddProject -> ({model | view=Types.ProjectView}, Cmd.none)
+  UpdateOverview (Overview.ChangeView v) ->
+      let jwt = Maybe.withDefault "" <| Maybe.map .jwtToken model.user
+      in case v of
+          Types.GroupView (Just i) -> ({model | view=v}, Cmd.map UpdateGroup <| Group.loadGroupCmd jwt i)
+          _ -> ({model | view=v}, Cmd.none)
+
   UpdateOverview o -> let (newoverview,cmd) = Overview.update o model.overview
                       in ({model | overview = newoverview}, Cmd.map UpdateOverview cmd)
-  UpdateOrganisations Nothing -> (model, Cmd.none) --Types.generateMessage Types.Standard "Unable to get facilitator details" 5)
+  UpdateOrganisations Nothing -> (model, Cmd.none)
   UpdateOrganisations f -> ({model | facilitatorOrganisations=f},Cmd.none)
   ChangeView v -> case v of
-    OverviewView -> ({model | view = OverviewView},Cmd.map UpdateOverview <| Overview.getOverviewData model.overview )
+    Types.OverviewView -> ({model | view = Types.OverviewView},Cmd.map UpdateOverview <| Overview.getOverviewData model.overview )
+    Types.GroupView Nothing -> ({model | view = Types.GroupView Nothing}, Cmd.none)
+    Types.GroupView (Just i) -> let jwt = Debug.log "change view" <| Maybe.withDefault "" <| Maybe.map .jwtToken model.user
+                          in ({model | view = Types.GroupView (Just i)}, Cmd.map UpdateGroup (Group.loadGroupCmd jwt i))
     _ -> ({model | view = v}, Cmd.none)
 
 view : Model -> Html Msg
@@ -89,18 +91,15 @@ view m = div [] [
     navBar m,
     viewMessages m,
     case m.view of
-      GroupView -> div [] [
-                groupView m.facilitatorOrganisations m.group,
-                case groupSize m.group of
-                    0 -> button [] [text "Project ->"]
-                    _ -> button [class "button-primary", onClick (ChangeView ProjectView)] [text "Project ->"]
+      Types.GroupView _ -> div [] [
+                groupView m.facilitatorOrganisations m.group
                 ]
-      ProjectView -> div [] [
+      Types.ProjectView -> div [] [
                   projectView m.project,
-                  button [onClick (ChangeView GroupView)] [text "<- Group"]
+                  button [onClick (ChangeView (Types.GroupView Nothing))] [text "<- Group"]
                       ]
-      LoginView -> Html.map UpdateLogin <| Login.view m.login
-      OverviewView -> Html.map UpdateOverview <| Overview.view m.overview
+      Types.LoginView -> Html.map UpdateLogin <| Login.view m.login
+      Types.OverviewView -> Html.map UpdateOverview <| Overview.view m.overview
      ]
 
 viewMessages : Model -> Html Msg
@@ -117,7 +116,7 @@ navBar model = case model.user of
              ]
   Just _ -> nav [class "primary"] [
              ul [] [
-                     li [] [a [onClick (ChangeView OverviewView)] [text "Overview"]],
+                     li [] [a [onClick (ChangeView Types.OverviewView)] [text "Overview"]],
                      li [] [a [] [text "Dummy"]],
                      li [] [a [onClick Logout] [text "Logout"]]
                          ]
@@ -125,9 +124,10 @@ navBar model = case model.user of
 
 
 
-groupView orgs g = Html.map UpdateGroup <| case g of
-  Nothing -> Group.view orgs Group.model
-  Just grp -> Group.view orgs grp
+groupView orgs g = let orgid = Maybe.withDefault 0 <| List.head <| Dict.keys <| Maybe.withDefault Dict.empty orgs
+                   in Html.map UpdateGroup <| case g of
+                        Nothing -> Group.view orgs <| Group.Group orgid Dict.empty "" Nothing
+                        Just grp -> Group.view orgs grp
 
 projectView p = Html.map UpdateProject <| case p of
   Nothing -> Project.view Project.model
