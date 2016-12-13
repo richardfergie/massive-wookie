@@ -12751,21 +12751,29 @@ var _user$project$Component_Overview$getOverviewData = function (model) {
 var _user$project$Component_Project$update = F2(
 	function (msg, model) {
 		var _p0 = msg;
-		if (_p0.ctor === 'UpdateName') {
-			return _elm_lang$core$Native_Utils.update(
-				model,
-				{name: _p0._0});
-		} else {
-			return _elm_lang$core$Native_Utils.update(
-				model,
-				{description: _p0._0});
+		switch (_p0.ctor) {
+			case 'UpdateName':
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{name: _p0._0});
+			case 'UpdateDescription':
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{description: _p0._0});
+			default:
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{group: _p0._0});
 		}
 	});
-var _user$project$Component_Project$Project = F2(
-	function (a, b) {
-		return {name: a, description: b};
+var _user$project$Component_Project$Project = F4(
+	function (a, b, c, d) {
+		return {name: a, description: b, group: c, id: d};
 	});
-var _user$project$Component_Project$model = A2(_user$project$Component_Project$Project, '', '');
+var _user$project$Component_Project$model = A4(_user$project$Component_Project$Project, '', '', 0, _elm_lang$core$Maybe$Nothing);
+var _user$project$Component_Project$UpdateGroup = function (a) {
+	return {ctor: 'UpdateGroup', _0: a};
+};
 var _user$project$Component_Project$UpdateDescription = function (a) {
 	return {ctor: 'UpdateDescription', _0: a};
 };

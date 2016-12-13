@@ -6,15 +6,19 @@ import Html.Events exposing (..)
 
 type alias Project = {
         name : String,
-        description : String
+        description : String,
+        group : Int,
+        id : Maybe Int
     }
 
 type Msg = UpdateName String
          | UpdateDescription String
+         | UpdateGroup Int
 
 update msg model = case msg of
   UpdateName n -> {model | name = n}
   UpdateDescription d -> {model | description = d}
+  UpdateGroup d -> {model | group = d}
 
 view model = div [] [
               div [] [
@@ -27,4 +31,4 @@ view model = div [] [
                   ]
              ]
 
-model = Project "" ""
+model = Project "" "" 0 Nothing
