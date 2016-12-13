@@ -25,7 +25,9 @@ type API = "groupmember" :> CRUD Types.GroupMember
         :<|> "project" :> CRUD Types.Project
         :<|> "organisation" :> CRUD Types.Organisation
         :<|> "facilitator" :> CRUD Types.Facilitator
-        :<|> "current" :> "facilitator" :> Get '[JSON] (Types.Entity Types.Facilitator)
+        :<|> "current" :> ("facilitator" :> Get '[JSON] (Types.Entity Types.Facilitator)
+                      :<|> "eligiblegroups" :> Get '[JSON] [Types.Entity Types.Group]
+                           )
 
 crudder creator deleter setter getter = (\ i -> requireUser >> (runDB $ creator i))
              :<|> (\i -> requireUser >> (runDB $ deleter i) >> return NoContent)
@@ -61,7 +63,9 @@ projectsByUserId uid = do
   mfac <- Crud.getFacilitatorByUserId uid
   case mfac of
     Nothing -> return [] --maybe throw error because they are not a facilitator?
-    Just (Types.Entity facid _) -> Crud.getProjectsByFacilitatorId facid
+    Just (Types.Entity _ f) -> fmap concat $
+                              mapM Crud.getProjectsByOrganisationId $
+                              Types.facilitatorOrganisations f
 
 crudProject :: ServerT (CRUD Types.Project) (AppServer)
 crudProject = (requireUser >>= runDB . projectsByUserId . _userCredsId) :<|> (crudder Crud.createProject
@@ -96,6 +100,11 @@ getUserFacilitator = do
     Nothing -> throwError err404
     Just fac -> return fac
 
+-- groups that are eligible to have a project created
+-- i.e. no currently active project
+getEligibleGroups :: AppServer [Types.Entity Types.Group]
+getEligibleGroups = return []
+
 apiServer :: ServerT API (AppServer)
 apiServer = crudGroupMember
           :<|> crudGroup
@@ -103,3 +112,4 @@ apiServer = crudGroupMember
           :<|> crudOrganisation
           :<|> crudFacilitator
           :<|> getUserFacilitator
+          :<|> getEligibleGroups

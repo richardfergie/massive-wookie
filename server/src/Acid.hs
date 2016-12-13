@@ -123,11 +123,11 @@ instance Indexable FacilitatorIxs (Entity Types.Facilitator) where
                    (ixFun $ \x -> [Types.facilitatorUser $ Types.entityVal x])
                    (ixFun $ \x -> Types.facilitatorOrganisations $ Types.entityVal x)
 
-type ProjectIxs = '[Types.ProjectId, Types.FacilitatorId]
+type ProjectIxs = '[Types.ProjectId, Types.GroupId]
 
 instance Indexable ProjectIxs (Entity Types.Project) where
   indices = ixList (ixFun $ \x -> [Types.entityKey x])
-                   (ixFun $ \x -> [Types.facilitator $ Types.entityVal x])
+                   (ixFun $ \x -> [Types.group $ Types.entityVal x])
 
 data World = World {
   _worldGroupMembers :: Table GroupMemberIxs Types.GroupMember,
@@ -282,18 +282,17 @@ $(deriveSafeCopy 0 'base ''Types.Project)
 deleteProject = deleteWorld worldProjects
 getProject = getWorld worldProjects
 
-getProjectsByFacilitatorId :: Types.FacilitatorId -> Query World [Types.Entity Types.Project]
-getProjectsByFacilitatorId fid = do
+getProjectsByOrganisationId :: Types.OrganisationId -> Query World [Types.Entity Types.Project]
+getProjectsByOrganisationId fid = do
   Table _ projects <- fmap _worldProjects ask
-  return $ toList $ getEQ (fid::Types.FacilitatorId) projects
+  return $ toList $ getEQ (fid::Types.OrganisationId) projects
 
 checkProjectKeys p = do
-  fkey <- fmap isJust $ getFacilitator $ Types.facilitator p
   gkey <- fmap isJust $ getGroup $ Types.group p
   pkey <- case Types.panel p of
     Nothing -> return True
     Just pid -> fmap isJust $ error "Panel stuff is not defined"
-  return $ fkey && gkey && pkey
+  return $ gkey && pkey
 
 insertProject p = do
   fkey <- liftQuery $ checkProjectKeys p
@@ -336,7 +335,7 @@ $(makeAcidic ''World ['insertGroup,
                       'deleteProject,
                       'updateProject,
                       'getProject,
-                      'getProjectsByFacilitatorId,
+                      'getProjectsByOrganisationId,
                       'insertOrganisation,
                       'deleteOrganisation,
                       'updateOrganisation,
@@ -385,7 +384,7 @@ acidStateCrud acid p = do
   Crud.DeleteProject x :>>= ps -> update' acid (DeleteProject x) >>= acidStateCrud acid . ps
   Crud.SetProject k v :>>= ps -> update' acid (UpdateProject k v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
   Crud.CreateProject v :>>= ps -> update' acid (InsertProject v) >>= \res -> either (return . Left) (acidStateCrud acid . ps) res
-  Crud.GetProjectsByFacilitatorId fid :>>= ps -> query' acid (GetProjectsByFacilitatorId fid) >>= acidStateCrud acid . ps
+  Crud.GetProjectsByOrganisationId fid :>>= ps -> query' acid (GetProjectsByOrganisationId fid) >>= acidStateCrud acid . ps
 
   Crud.GetUser x :>>= ps -> query' acid (GetUser x) >>= acidStateCrud acid . ps
   Crud.DeleteUser x :>>= ps -> update' acid (DeleteUser x) >>= acidStateCrud acid . ps

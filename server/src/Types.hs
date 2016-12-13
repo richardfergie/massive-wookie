@@ -49,7 +49,6 @@ type UserId = Int
 data ProjectStatus = Created | Submitted | Validated | Granted deriving (Show, Generic,ToJSON,FromJSON)
 data Project = Project { projectName :: Text,
                          projectDescription :: Text,
-                         facilitator :: FacilitatorId,
                          group :: GroupId,
                          panel :: Maybe PanelId,
                          status :: ProjectStatus

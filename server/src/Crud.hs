@@ -39,7 +39,7 @@ data Crud a where
   SetProject :: ProjectId -> Project -> Crud (Entity Project)
   DeleteProject :: ProjectId -> Crud ()
   GetProject :: ProjectId -> Crud (Maybe (Entity Project))
-  GetProjectsByFacilitatorId :: FacilitatorId -> Crud [Entity Project]
+  GetProjectsByOrganisationId :: OrganisationId -> Crud [Entity Project]
 
   CreateGroupMember :: GroupMember -> Crud (Entity GroupMember)
   SetGroupMember :: GroupMemberId
@@ -79,7 +79,7 @@ createProject = (.) singleton CreateProject
 setProject x y = ($) singleton (SetProject x y)
 deleteProject = (.) singleton DeleteProject
 getProject = (.) singleton GetProject
-getProjectsByFacilitatorId = singleton . GetProjectsByFacilitatorId
+getProjectsByOrganisationId = singleton . GetProjectsByOrganisationId
 
 createGroupMember = (.) singleton CreateGroupMember
 setGroupMember x y = ($) singleton (SetGroupMember x y)
