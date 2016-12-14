@@ -12476,7 +12476,11 @@ var _user$project$Component_Overview$viewGroup = function (grp) {
 							_0: _elm_lang$html$Html_Events$onClick(
 								_user$project$Component_Overview$ChangeView(
 									_user$project$Helpers_Types$GroupView(grp.id))),
-							_1: {ctor: '[]'}
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$href('#'),
+								_1: {ctor: '[]'}
+							}
 						},
 						{
 							ctor: '::',
@@ -12501,7 +12505,11 @@ var _user$project$Component_Overview$viewProject = function (proj) {
 					_0: _elm_lang$html$Html_Events$onClick(
 						_user$project$Component_Overview$ChangeView(
 							_user$project$Helpers_Types$ProjectView(proj.id))),
-					_1: {ctor: '[]'}
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$href('#'),
+						_1: {ctor: '[]'}
+					}
 				},
 				{
 					ctor: '::',

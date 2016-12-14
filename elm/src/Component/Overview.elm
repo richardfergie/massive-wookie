@@ -112,13 +112,13 @@ viewGroups model = case model.groups of
 viewGroup : Group -> Html Msg
 viewGroup grp = div [] [
                  div [] [
-                     a [onClick (ChangeView <| GroupView grp.id)] [text grp.groupName]
+                     a [onClick (ChangeView <| GroupView grp.id), href "#"] [text grp.groupName]
                      ]
                 ]
 
 viewProject : Project -> Html Msg
 viewProject proj = div [] [
-                    a [onClick <| ChangeView <| ProjectView proj.id] [text proj.projectName]
+                    a [onClick <| ChangeView <| ProjectView proj.id, href "#"] [text proj.projectName]
                    ]
 
 main = Html.program {
