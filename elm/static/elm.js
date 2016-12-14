@@ -11039,6 +11039,64 @@ var _simonh1000$elm_jwt$Jwt$sendCheckExpired = F3(
 					_elm_lang$http$Http$toTask(request))));
 	});
 
+var _user$project$Generated_Types$encodeProjectStatus = function (s) {
+	return _elm_lang$core$Json_Encode$string(
+		_elm_lang$core$Basics$toString(s));
+};
+var _user$project$Generated_Types$encodeProject = function (prj) {
+	var lst = A2(
+		_elm_lang$core$Basics_ops['++'],
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'projectName',
+				_1: _elm_lang$core$Json_Encode$string(prj.projectName)
+			},
+			_1: {
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'projectDescription',
+					_1: _elm_lang$core$Json_Encode$string(prj.projectDescription)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'group',
+						_1: _elm_lang$core$Json_Encode$int(prj.group)
+					},
+					_1: {
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'status',
+							_1: _user$project$Generated_Types$encodeProjectStatus(prj.status)
+						},
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		},
+		function () {
+			var _p0 = prj.id;
+			if (_p0.ctor === 'Nothing') {
+				return {ctor: '[]'};
+			} else {
+				return {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'id',
+						_1: _elm_lang$core$Json_Encode$int(_p0._0)
+					},
+					_1: {ctor: '[]'}
+				};
+			}
+		}());
+	return _elm_lang$core$Json_Encode$object(lst);
+};
 var _user$project$Generated_Types$encodeGroup = function (g) {
 	var lst = A2(
 		_elm_lang$core$Basics_ops['++'],
@@ -11069,8 +11127,8 @@ var _user$project$Generated_Types$encodeGroup = function (g) {
 			}
 		},
 		function () {
-			var _p0 = g.id;
-			if (_p0.ctor === 'Nothing') {
+			var _p1 = g.id;
+			if (_p1.ctor === 'Nothing') {
 				return {ctor: '[]'};
 			} else {
 				return {
@@ -11078,7 +11136,7 @@ var _user$project$Generated_Types$encodeGroup = function (g) {
 					_0: {
 						ctor: '_Tuple2',
 						_0: 'id',
-						_1: _elm_lang$core$Json_Encode$int(_p0._0)
+						_1: _elm_lang$core$Json_Encode$int(_p1._0)
 					},
 					_1: {ctor: '[]'}
 				};
@@ -11116,8 +11174,8 @@ var _user$project$Generated_Types$encodeGroupMember = function (g) {
 			}
 		},
 		function () {
-			var _p1 = g.id;
-			if (_p1.ctor === 'Nothing') {
+			var _p2 = g.id;
+			if (_p2.ctor === 'Nothing') {
 				return {ctor: '[]'};
 			} else {
 				return {
@@ -11125,7 +11183,7 @@ var _user$project$Generated_Types$encodeGroupMember = function (g) {
 					_0: {
 						ctor: '_Tuple2',
 						_0: 'id',
-						_1: _elm_lang$core$Json_Encode$int(_p1._0)
+						_1: _elm_lang$core$Json_Encode$int(_p2._0)
 					},
 					_1: {ctor: '[]'}
 				};
@@ -11134,11 +11192,11 @@ var _user$project$Generated_Types$encodeGroupMember = function (g) {
 	return _elm_lang$core$Json_Encode$object(lst);
 };
 var _user$project$Generated_Types$resultToDecoder = function (result) {
-	var _p2 = result;
-	if (_p2.ctor === 'Ok') {
-		return _elm_lang$core$Json_Decode$succeed(_p2._0);
+	var _p3 = result;
+	if (_p3.ctor === 'Ok') {
+		return _elm_lang$core$Json_Decode$succeed(_p3._0);
 	} else {
-		return _elm_lang$core$Json_Decode$fail(_p2._0);
+		return _elm_lang$core$Json_Decode$fail(_p3._0);
 	}
 };
 var _user$project$Generated_Types$Organisation = F2(
@@ -11224,9 +11282,9 @@ var _user$project$Generated_Types$decodeFacilitator = A4(
 				'facilitatorName',
 				_elm_lang$core$Json_Decode$string,
 				_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Generated_Types$Facilitator)))));
-var _user$project$Generated_Types$Project = F7(
-	function (a, b, c, d, e, f, g) {
-		return {projectName: a, projectDescription: b, facilitator: c, group: d, panel: e, status: f, id: g};
+var _user$project$Generated_Types$Project = F5(
+	function (a, b, c, d, e) {
+		return {projectName: a, projectDescription: b, group: c, status: d, id: e};
 	});
 var _user$project$Generated_Types$Granted = {ctor: 'Granted'};
 var _user$project$Generated_Types$Validated = {ctor: 'Validated'};
@@ -11263,25 +11321,17 @@ var _user$project$Helpers_Types$decodeProject = A4(
 		_user$project$Helpers_Types$decodeProjectStatus,
 		A3(
 			_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
-			'project',
-			_elm_lang$core$Json_Decode$nullable(_elm_lang$core$Json_Decode$int),
+			'group',
+			_elm_lang$core$Json_Decode$int,
 			A3(
 				_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
-				'group',
-				_elm_lang$core$Json_Decode$int,
+				'projectDescription',
+				_elm_lang$core$Json_Decode$string,
 				A3(
 					_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
-					'facilitator',
-					_elm_lang$core$Json_Decode$int,
-					A3(
-						_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
-						'projectDescription',
-						_elm_lang$core$Json_Decode$string,
-						A3(
-							_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
-							'projectName',
-							_elm_lang$core$Json_Decode$string,
-							_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Generated_Types$Project))))))));
+					'projectName',
+					_elm_lang$core$Json_Decode$string,
+					_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Generated_Types$Project))))));
 var _user$project$Helpers_Types$entitiesToDict = function (l) {
 	return _elm_lang$core$Dict$fromList(
 		A2(
@@ -11381,7 +11431,9 @@ var _user$project$Helpers_Types$decodeUserCreds = A3(
 				_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Helpers_Types$UserCreds)))));
 var _user$project$Helpers_Types$OverviewView = {ctor: 'OverviewView'};
 var _user$project$Helpers_Types$LoginView = {ctor: 'LoginView'};
-var _user$project$Helpers_Types$ProjectView = {ctor: 'ProjectView'};
+var _user$project$Helpers_Types$ProjectView = function (a) {
+	return {ctor: 'ProjectView', _0: a};
+};
 var _user$project$Helpers_Types$GroupView = function (a) {
 	return {ctor: 'GroupView', _0: a};
 };
@@ -12436,6 +12488,29 @@ var _user$project$Component_Overview$viewGroup = function (grp) {
 			_1: {ctor: '[]'}
 		});
 };
+var _user$project$Component_Overview$viewProject = function (proj) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$a,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onClick(
+						_user$project$Component_Overview$ChangeView(
+							_user$project$Helpers_Types$ProjectView(proj.id))),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(proj.projectName),
+					_1: {ctor: '[]'}
+				}),
+			_1: {ctor: '[]'}
+		});
+};
 var _user$project$Component_Overview$AddProject = {ctor: 'AddProject'};
 var _user$project$Component_Overview$projectButton = A2(
 	_elm_lang$html$Html$div,
@@ -12505,15 +12580,14 @@ var _user$project$Component_Overview$viewProjects = function (model) {
 				return A2(
 					_elm_lang$html$Html$div,
 					{ctor: '[]'},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text('You have some projects'),
-						_1: {
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						A2(_elm_lang$core$List$map, _user$project$Component_Overview$viewProject, _p2),
+						{
 							ctor: '::',
 							_0: _user$project$Component_Overview$projectButton,
 							_1: {ctor: '[]'}
-						}
-					});
+						}));
 			}
 	}
 };
@@ -12717,8 +12791,7 @@ var _user$project$Component_Overview$getProjects = function (model) {
 				url: 'http://localhost:8080/project',
 				body: _elm_lang$http$Http$emptyBody,
 				expect: _elm_lang$http$Http$expectJson(
-					_elm_lang$core$Json_Decode$list(
-						_user$project$Helpers_Types$decodeEntity(_user$project$Helpers_Types$decodeProject))),
+					_elm_lang$core$Json_Decode$list(_user$project$Helpers_Types$decodeProject)),
 				headers: {
 					ctor: '::',
 					_0: A2(_elm_lang$http$Http$header, 'Content-Type', 'application/json'),
@@ -12748,49 +12821,64 @@ var _user$project$Component_Overview$getOverviewData = function (model) {
 		});
 };
 
-var _user$project$Component_Project$update = F2(
-	function (msg, model) {
-		var _p0 = msg;
-		switch (_p0.ctor) {
-			case 'UpdateName':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{name: _p0._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'UpdateDescription':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{description: _p0._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'UpdateGroup':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{group: _p0._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'SaveProject':
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			case 'SetProject':
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			case 'LoadProject':
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			default:
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-		}
+var _user$project$Component_Project$loadProjectHttp = F2(
+	function (jwt, i) {
+		return _elm_lang$http$Http$toTask(
+			_elm_lang$http$Http$request(
+				{
+					method: 'GET',
+					url: A2(
+						_elm_lang$core$Basics_ops['++'],
+						'http://localhost:8080/project/',
+						_elm_lang$core$Basics$toString(i)),
+					body: _elm_lang$http$Http$emptyBody,
+					expect: _elm_lang$http$Http$expectJson(_user$project$Helpers_Types$decodeProject),
+					headers: {
+						ctor: '::',
+						_0: A2(_elm_lang$http$Http$header, 'authorization', jwt),
+						_1: {ctor: '[]'}
+					},
+					timeout: _elm_lang$core$Maybe$Nothing,
+					withCredentials: false
+				}));
 	});
-var _user$project$Component_Project$Project = F4(
-	function (a, b, c, d) {
-		return {name: a, description: b, group: c, id: d};
+var _user$project$Component_Project$saveProjectHttp = F2(
+	function (jwt, proj) {
+		var _p0 = function () {
+			var _p1 = proj.id;
+			if (_p1.ctor === 'Nothing') {
+				return {ctor: '_Tuple2', _0: 'POST', _1: 'http://localhost:8080/project/create'};
+			} else {
+				return {
+					ctor: '_Tuple2',
+					_0: 'PUT',
+					_1: A2(
+						_elm_lang$core$Basics_ops['++'],
+						'http://localhost:8080/project/',
+						_elm_lang$core$Basics$toString(_p1._0))
+				};
+			}
+		}();
+		var method = _p0._0;
+		var url = _p0._1;
+		return _elm_lang$http$Http$toTask(
+			_elm_lang$http$Http$request(
+				{
+					method: method,
+					url: url,
+					body: _elm_lang$http$Http$jsonBody(
+						_user$project$Generated_Types$encodeProject(proj)),
+					expect: _elm_lang$http$Http$expectJson(_user$project$Helpers_Types$decodeProject),
+					headers: {
+						ctor: '::',
+						_0: A2(_elm_lang$http$Http$header, 'authorization', jwt),
+						_1: {ctor: '[]'}
+					},
+					timeout: _elm_lang$core$Maybe$Nothing,
+					withCredentials: false
+				}));
 	});
-var _user$project$Component_Project$model = A4(_user$project$Component_Project$Project, '', '', 0, _elm_lang$core$Maybe$Nothing);
+var _user$project$Component_Project$model = A5(_user$project$Generated_Types$Project, '', '', 0, _user$project$Generated_Types$Created, _elm_lang$core$Maybe$Nothing);
 var _user$project$Component_Project$ChangeView = function (a) {
 	return {ctor: 'ChangeView', _0: a};
 };
@@ -12800,6 +12888,76 @@ var _user$project$Component_Project$LoadProject = function (a) {
 var _user$project$Component_Project$SetProject = function (a) {
 	return {ctor: 'SetProject', _0: a};
 };
+var _user$project$Component_Project$saveProject = F2(
+	function (jwt, proj) {
+		return A2(
+			_elm_lang$core$Task$attempt,
+			function (_p2) {
+				return _user$project$Component_Project$SetProject(
+					_krisajenkins$remotedata$RemoteData$fromResult(_p2));
+			},
+			A2(_user$project$Component_Project$saveProjectHttp, jwt, proj));
+	});
+var _user$project$Component_Project$loadProject = F2(
+	function (jwt, i) {
+		return A2(
+			_elm_lang$core$Task$attempt,
+			function (_p3) {
+				return _user$project$Component_Project$SetProject(
+					_krisajenkins$remotedata$RemoteData$fromResult(_p3));
+			},
+			A2(_user$project$Component_Project$loadProjectHttp, jwt, i));
+	});
+var _user$project$Component_Project$update = F3(
+	function (jwt, msg, model) {
+		var _p4 = msg;
+		switch (_p4.ctor) {
+			case 'UpdateName':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{projectName: _p4._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'UpdateDescription':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{projectDescription: _p4._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'UpdateGroup':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{group: _p4._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'SaveProject':
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: A2(_user$project$Component_Project$saveProject, jwt, model)
+				};
+			case 'SetProject':
+				if (_p4._0.ctor === 'Success') {
+					return {ctor: '_Tuple2', _0: _p4._0._0, _1: _elm_lang$core$Platform_Cmd$none};
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				}
+			case 'LoadProject':
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: A2(_user$project$Component_Project$loadProject, jwt, _p4._0)
+				};
+			default:
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+		}
+	});
 var _user$project$Component_Project$SaveProject = {ctor: 'SaveProject'};
 var _user$project$Component_Project$UpdateGroup = function (a) {
 	return {ctor: 'UpdateGroup', _0: a};
@@ -12829,7 +12987,11 @@ var _user$project$Component_Project$view = function (model) {
 							_1: {
 								ctor: '::',
 								_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_Project$UpdateName),
-								_1: {ctor: '[]'}
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$value(model.projectName),
+									_1: {ctor: '[]'}
+								}
 							}
 						},
 						{ctor: '[]'}),
@@ -12856,7 +13018,11 @@ var _user$project$Component_Project$view = function (model) {
 										_1: {
 											ctor: '::',
 											_0: _elm_lang$html$Html_Events$onInput(_user$project$Component_Project$UpdateDescription),
-											_1: {ctor: '[]'}
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$html$Html_Attributes$value(model.projectDescription),
+												_1: {ctor: '[]'}
+											}
 										}
 									}
 								}
@@ -12864,7 +13030,22 @@ var _user$project$Component_Project$view = function (model) {
 							{ctor: '[]'}),
 						_1: {ctor: '[]'}
 					}),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$button,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Events$onClick(_user$project$Component_Project$SaveProject),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Save Project'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
 			}
 		});
 };
@@ -13184,8 +13365,18 @@ var _user$project$Main$update = F2(
 					};
 				}
 			case 'UpdateProject':
-				var _p8 = A2(
+				var jwt = A2(
+					_elm_lang$core$Maybe$withDefault,
+					'',
+					A2(
+						_elm_lang$core$Maybe$map,
+						function (_) {
+							return _.jwtToken;
+						},
+						model.user));
+				var _p8 = A3(
 					_user$project$Component_Project$update,
+					jwt,
 					_p5._0,
 					A2(_elm_lang$core$Maybe$withDefault, _user$project$Component_Project$model, model.project));
 				var newproject = _p8._0;
@@ -13289,7 +13480,9 @@ var _user$project$Main$update = F2(
 							ctor: '_Tuple2',
 							_0: _elm_lang$core$Native_Utils.update(
 								model,
-								{view: _user$project$Helpers_Types$ProjectView}),
+								{
+									view: _user$project$Helpers_Types$ProjectView(_elm_lang$core$Maybe$Nothing)
+								}),
 							_1: _elm_lang$core$Platform_Cmd$none
 						};
 					case 'ChangeView':
@@ -13304,26 +13497,50 @@ var _user$project$Main$update = F2(
 								},
 								model.user));
 						var _p13 = _p14;
-						if ((_p13.ctor === 'GroupView') && (_p13._0.ctor === 'Just')) {
-							return {
-								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{view: _p14}),
-								_1: A2(
-									_elm_lang$core$Platform_Cmd$map,
-									_user$project$Main$UpdateGroup,
-									A2(_user$project$Component_Group$loadGroupCmd, jwt, _p13._0._0))
-							};
-						} else {
-							return {
-								ctor: '_Tuple2',
-								_0: _elm_lang$core$Native_Utils.update(
-									model,
-									{view: _p14}),
-								_1: _elm_lang$core$Platform_Cmd$none
-							};
-						}
+						_v5_2:
+						do {
+							switch (_p13.ctor) {
+								case 'GroupView':
+									if (_p13._0.ctor === 'Just') {
+										return {
+											ctor: '_Tuple2',
+											_0: _elm_lang$core$Native_Utils.update(
+												model,
+												{view: _p14}),
+											_1: A2(
+												_elm_lang$core$Platform_Cmd$map,
+												_user$project$Main$UpdateGroup,
+												A2(_user$project$Component_Group$loadGroupCmd, jwt, _p13._0._0))
+										};
+									} else {
+										break _v5_2;
+									}
+								case 'ProjectView':
+									if (_p13._0.ctor === 'Just') {
+										return {
+											ctor: '_Tuple2',
+											_0: _elm_lang$core$Native_Utils.update(
+												model,
+												{view: _p14}),
+											_1: A2(
+												_elm_lang$core$Platform_Cmd$map,
+												_user$project$Main$UpdateProject,
+												A2(_user$project$Component_Project$loadProject, jwt, _p13._0._0))
+										};
+									} else {
+										break _v5_2;
+									}
+								default:
+									break _v5_2;
+							}
+						} while(false);
+						return {
+							ctor: '_Tuple2',
+							_0: _elm_lang$core$Native_Utils.update(
+								model,
+								{view: _p14}),
+							_1: _elm_lang$core$Platform_Cmd$none
+						};
 					default:
 						var _p15 = A2(_user$project$Component_Overview$update, _p5._0, model.overview);
 						var newoverview = _p15._0;
@@ -13363,6 +13580,38 @@ var _user$project$Main$update = F2(
 								_user$project$Main$UpdateOverview,
 								_user$project$Component_Overview$getOverviewData(model.overview))
 						};
+					case 'ProjectView':
+						if (_p16._0.ctor === 'Nothing') {
+							return {
+								ctor: '_Tuple2',
+								_0: _elm_lang$core$Native_Utils.update(
+									model,
+									{
+										view: _user$project$Helpers_Types$ProjectView(_elm_lang$core$Maybe$Nothing)
+									}),
+								_1: _elm_lang$core$Platform_Cmd$none
+							};
+						} else {
+							var jwt = A2(
+								_elm_lang$core$Maybe$withDefault,
+								'',
+								A2(
+									_elm_lang$core$Maybe$map,
+									function (_) {
+										return _.jwtToken;
+									},
+									model.user));
+							return {
+								ctor: '_Tuple2',
+								_0: _elm_lang$core$Native_Utils.update(
+									model,
+									{view: _p18}),
+								_1: A2(
+									_elm_lang$core$Platform_Cmd$map,
+									_user$project$Main$UpdateProject,
+									A2(_user$project$Component_Project$loadProject, jwt, _p16._0._0))
+							};
+						}
 					case 'GroupView':
 						if (_p16._0.ctor === 'Nothing') {
 							return {
@@ -13377,17 +13626,14 @@ var _user$project$Main$update = F2(
 						} else {
 							var _p17 = _p16._0._0;
 							var jwt = A2(
-								_elm_lang$core$Debug$log,
-								'change view',
+								_elm_lang$core$Maybe$withDefault,
+								'',
 								A2(
-									_elm_lang$core$Maybe$withDefault,
-									'',
-									A2(
-										_elm_lang$core$Maybe$map,
-										function (_) {
-											return _.jwtToken;
-										},
-										model.user)));
+									_elm_lang$core$Maybe$map,
+									function (_) {
+										return _.jwtToken;
+									},
+									model.user));
 							return {
 								ctor: '_Tuple2',
 								_0: _elm_lang$core$Native_Utils.update(
@@ -13467,24 +13713,7 @@ var _user$project$Main$view = function (m) {
 									{
 										ctor: '::',
 										_0: _user$project$Main$projectView(m.project),
-										_1: {
-											ctor: '::',
-											_0: A2(
-												_elm_lang$html$Html$button,
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html_Events$onClick(
-														_user$project$Main$ChangeView(
-															_user$project$Helpers_Types$GroupView(_elm_lang$core$Maybe$Nothing))),
-													_1: {ctor: '[]'}
-												},
-												{
-													ctor: '::',
-													_0: _elm_lang$html$Html$text('<- Group'),
-													_1: {ctor: '[]'}
-												}),
-											_1: {ctor: '[]'}
-										}
+										_1: {ctor: '[]'}
 									});
 							case 'LoginView':
 								return A2(

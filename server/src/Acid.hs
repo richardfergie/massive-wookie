@@ -289,10 +289,7 @@ getProjectsByOrganisationId fid = do
 
 checkProjectKeys p = do
   gkey <- fmap isJust $ getGroup $ Types.group p
-  pkey <- case Types.panel p of
-    Nothing -> return True
-    Just pid -> fmap isJust $ error "Panel stuff is not defined"
-  return $ gkey && pkey
+  return $ gkey
 
 insertProject p = do
   fkey <- liftQuery $ checkProjectKeys p

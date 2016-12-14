@@ -50,7 +50,6 @@ data ProjectStatus = Created | Submitted | Validated | Granted deriving (Show, G
 data Project = Project { projectName :: Text,
                          projectDescription :: Text,
                          group :: GroupId,
-                         panel :: Maybe PanelId,
                          status :: ProjectStatus
                        } deriving (Show, Generic,ToJSON,FromJSON)
 

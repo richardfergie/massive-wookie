@@ -10,7 +10,7 @@ import Task
 import Time
 
 type View = GroupView (Maybe Int)
-          | ProjectView
+          | ProjectView (Maybe Int)
           | LoginView
           | OverviewView
 
@@ -77,9 +77,7 @@ decodeProject =
     decode Project
         |> required "projectName" string
         |> required "projectDescription" string
-        |> required "facilitator" int
         |> required "group" int
-        |> required "project" (nullable int)
         |> required "status" decodeProjectStatus
         |> optional "id" (maybe int) Nothing
 

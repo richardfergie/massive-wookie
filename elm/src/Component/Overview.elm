@@ -13,7 +13,7 @@ import List
 import Dict
 
 type alias Model = {
-        projects : WebData (List (Entity Project)),
+        projects : WebData (List (Project)),
         groups : WebData (List (Group)),
         jwtToken : Maybe String
     }
@@ -26,7 +26,7 @@ getProjects model = Http.request {
                         method = "GET",
                         url = "http://localhost:8080/project",
                         body = Http.emptyBody,
-                        expect = Http.expectJson (Decode.list (decodeEntity decodeProject)),
+                        expect = Http.expectJson (Decode.list decodeProject),
                         headers = [
                              Http.header "Content-Type" "application/json",
                              Http.header "authorization" (Maybe.withDefault "" model.jwtToken)
@@ -51,7 +51,7 @@ getGroups model = Http.request {
 
 init = (Model NotAsked NotAsked Nothing, Cmd.none)
 
-type Msg = ProjectResponse (WebData (List (Entity Project)))
+type Msg = ProjectResponse (WebData (List Project))
          | GroupResponse (WebData (List Group))
          | AddGroup
          | AddProject
@@ -93,9 +93,9 @@ viewProjects model = case model.projects of
      [] -> div [] [text "You have no projects",
                    projectButton
                   ]
-     ps -> div [] [text "You have some projects",
-                   projectButton
-                  ]
+     ps -> div [] <| (List.map viewProject ps)
+                   ++ [projectButton]
+
 
 viewGroups : Model -> Html Msg
 viewGroups model = case model.groups of
@@ -115,6 +115,11 @@ viewGroup grp = div [] [
                      a [onClick (ChangeView <| GroupView grp.id)] [text grp.groupName]
                      ]
                 ]
+
+viewProject : Project -> Html Msg
+viewProject proj = div [] [
+                    a [onClick <| ChangeView <| ProjectView proj.id] [text proj.projectName]
+                   ]
 
 main = Html.program {
            init = init,

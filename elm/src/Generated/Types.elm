@@ -96,12 +96,22 @@ type ProjectStatus
     | Validated
     | Granted
 
+encodeProjectStatus s = Encode.string <| toString s
+
 type alias Project =
     { projectName : String
     , projectDescription : String
-    , facilitator : Int
     , group : Int
-    , panel : Maybe (Int)
     , status : ProjectStatus
     , id : Maybe Int
     }
+
+encodeProject prj = let lst = [
+                         ("projectName", Encode.string prj.projectName),
+                         ("projectDescription", Encode.string prj.projectDescription),
+                         ("group", Encode.int prj.group),
+                         ("status", encodeProjectStatus prj.status)
+                        ] ++ case prj.id of
+                                 Nothing -> []
+                                 Just i -> [("id", Encode.int i)]
+                     in Encode.object lst
